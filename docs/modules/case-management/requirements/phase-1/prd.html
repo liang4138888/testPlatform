@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>测试平台一期交互原型</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: #1f2937;
+        background: #eef2f7;
+        font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        min-height: 36px;
+        padding: 0 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #1f2937;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button.primary {
+        border-color: #2563eb;
+        background: #2563eb;
+        color: #ffffff;
+      }
+
+      button.danger {
+        border-color: #ef4444;
+        color: #b91c1c;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        padding: 9px 10px;
+        background: #ffffff;
+      }
+
+      textarea {
+        min-height: 92px;
+        resize: vertical;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: 232px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        background: #172033;
+        color: #ffffff;
+        padding: 22px 16px;
+      }
+
+      .brand {
+        margin-bottom: 24px;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .nav-button {
+        display: block;
+        width: 100%;
+        margin-bottom: 6px;
+        border: 0;
+        background: transparent;
+        color: #cbd5e1;
+        text-align: left;
+      }
+
+      .nav-button.active,
+      .nav-button:hover {
+        background: #2563eb;
+        color: #ffffff;
+      }
+
+      .page {
+        padding: 24px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 6px;
+        font-size: 26px;
+      }
+
+      h2 {
+        margin-bottom: 14px;
+        font-size: 18px;
+      }
+
+      h3 {
+        margin-bottom: 8px;
+        font-size: 15px;
+      }
+
+      .muted {
+        color: #6b7280;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .screen {
+        display: none;
+      }
+
+      .screen.active {
+        display: block;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .cols-2 {
+        grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+      }
+
+      .cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .step {
+        min-height: 86px;
+        padding: 12px;
+        border: 1px solid #dbe4f0;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .step strong {
+        display: block;
+        margin-bottom: 6px;
+        color: #1d4ed8;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .table th,
+      .table td {
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      .table th {
+        color: #4b5563;
+        background: #f9fafb;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .tag.green {
+        color: #166534;
+        background: #dcfce7;
+      }
+
+      .tag.gray {
+        color: #374151;
+        background: #e5e7eb;
+      }
+
+      .tag.blue {
+        color: #1d4ed8;
+        background: #dbeafe;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .tip {
+        border-left: 4px solid #2563eb;
+        border-radius: 6px;
+        padding: 12px 14px;
+        background: #eff6ff;
+        color: #1e3a8a;
+      }
+
+      .warning {
+        border-left-color: #f59e0b;
+        background: #fffbeb;
+        color: #92400e;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(360px, 0.95fr) minmax(380px, 1.05fr);
+        gap: 16px;
+      }
+
+      .tree {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+      }
+
+      .tree ul {
+        list-style: none;
+        margin: 8px 0 0 18px;
+        padding-left: 14px;
+        border-left: 1px solid #d1d5db;
+      }
+
+      .tree li {
+        margin: 8px 0;
+      }
+
+      .node {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 5px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        background: #ffffff;
+        cursor: pointer;
+      }
+
+      .node.selected {
+        border-color: #2563eb;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-weight: 700;
+      }
+
+      .prototype-note {
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 8px;
+        background: #f9fafb;
+        color: #4b5563;
+      }
+
+      .result-box {
+        min-height: 54px;
+        margin-top: 14px;
+        padding: 12px;
+        border: 1px dashed #93c5fd;
+        border-radius: 8px;
+        background: #eff6ff;
+        color: #1e3a8a;
+      }
+
+      .status-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .empty-state {
+        min-height: 180px;
+        display: grid;
+        place-items: center;
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        background: #f8fafc;
+        color: #64748b;
+        text-align: center;
+      }
+
+      @media (max-width: 1060px) {
+        .app,
+        .cols-2,
+        .cols-3,
+        .workspace,
+        .flow {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">测试平台</div>
+        <button class="nav-button active" data-screen="overview">1. 操作流程</button>
+        <button class="nav-button" data-screen="requirements">2. 项目与需求</button>
+        <button class="nav-button" data-screen="upload">3. 上传解析</button>
+        <button class="nav-button" data-screen="editor">4. 用例树编辑</button>
+        <button class="nav-button" data-screen="export">5. 导出下载</button>
+        <button class="nav-button" data-screen="rules">6. 规则验收</button>
+      </aside>
+
+      <main class="page">
+        <section class="topbar">
+          <div>
+            <h1>XMind 用例管理一期交互原型</h1>
+            <p class="muted">这个页面不是最终产品，而是用来说明：用户点哪里、页面展示什么、系统发生什么。</p>
+          </div>
+          <div class="actions">
+            <button data-screen-target="requirements">进入需求列表</button>
+            <button class="primary" data-screen-target="upload">上传 XMind</button>
+          </div>
+        </section>
+
+        <section id="overview" class="screen active">
+          <div class="flow">
+            <div class="step">
+              <strong>1 选择项目</strong>
+              <span>进入项目后，只看该项目下的需求和用例集。</span>
+            </div>
+            <div class="step">
+              <strong>2 选择需求</strong>
+              <span>用例必须归属到某个需求。</span>
+            </div>
+            <div class="step">
+              <strong>3 上传 XMind</strong>
+              <span>选择 `.xmind` 文件，点击上传并解析。</span>
+            </div>
+            <div class="step">
+              <strong>4 编辑用例树</strong>
+              <span>点击树节点，右侧显示详情并可修改。</span>
+            </div>
+            <div class="step">
+              <strong>5 导出文件</strong>
+              <span>按当前平台数据生成新的 `.xmind`。</span>
+            </div>
+          </div>
+
+          <div class="grid cols-2">
+            <article class="card">
+              <h2>用户主路径</h2>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>用户操作</th>
+                    <th>页面反馈</th>
+                    <th>系统动作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>点击“上传 XMind”</td>
+                    <td>打开上传页面，要求选择项目、需求和文件</td>
+                    <td>不保存数据，等待用户提交</td>
+                  </tr>
+                  <tr>
+                    <td>点击“上传并解析”</td>
+                    <td>显示解析成功或失败提示</td>
+                    <td>保存原文件到后端本地目录，解析结果入 MySQL</td>
+                  </tr>
+                  <tr>
+                    <td>点击用例树节点</td>
+                    <td>右侧出现该节点详情</td>
+                    <td>不立即保存，等待用户点击保存</td>
+                  </tr>
+                  <tr>
+                    <td>点击“导出 XMind”</td>
+                    <td>生成下载记录和下载按钮</td>
+                    <td>按当前树数据生成新文件并存到后端本地目录</td>
+                  </tr>
+                </tbody>
+              </table>
+            </article>
+
+            <article class="card">
+              <h2>交互阅读方式</h2>
+              <p class="tip">左侧菜单可以切换页面。表格和按钮也可以点击，会跳转到对应原型页面，并在蓝色结果框里说明点击后的表现。</p>
+              <p class="muted">真实系统后续会把这些静态数据替换成接口数据。这里主要确认产品流程和页面结构。</p>
+              <div class="result-box" id="globalResult">当前状态：等待选择一个操作。</div>
+            </article>
+          </div>
+        </section>
+
+        <section id="requirements" class="screen">
+          <div class="grid cols-2">
+            <article class="card">
+              <h2>项目与需求列表</h2>
+              <div class="status-line">
+                <span class="tag blue">当前项目：移动端测试平台</span>
+                <span class="tag gray">一期无登录权限</span>
+              </div>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>需求编号</th>
+                    <th>需求名称</th>
+                    <th>用例集状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>REQ-001</td>
+                    <td>登录流程改造</td>
+                    <td><span class="tag green">已上传</span></td>
+                    <td class="actions">
+                      <button data-screen-target="editor" data-result="进入 REQ-001 的用例树编辑页，左侧展示已解析的用例树。">查看</button>
+                      <button data-screen-target="upload" data-result="进入上传页，并默认带入 REQ-001。">重新上传</button>
+                      <button data-screen-target="export" data-result="进入导出页，可以下载原文件或导出新 XMind。">导出</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>REQ-002</td>
+                    <td>消息中心优化</td>
+                    <td><span class="tag gray">未上传</span></td>
+                    <td class="actions">
+                      <button data-screen-target="upload" data-result="进入上传页，并默认带入 REQ-002。">上传</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </article>
+
+            <article class="card">
+              <h2>这个页面怎么交互</h2>
+              <p><strong>新建项目：</strong>弹窗填写项目名称和描述，保存后刷新项目列表。</p>
+              <p><strong>新建需求：</strong>在当前项目下填写需求编号、需求名称、说明。</p>
+              <p><strong>查看：</strong>进入该需求下最新用例集的树形编辑页面。</p>
+              <p><strong>上传：</strong>进入上传页，上传成功后自动进入编辑页。</p>
+              <p><strong>导出：</strong>进入导出下载页，展示原文件和最近导出的文件。</p>
+              <div class="result-box" id="requirementsResult">点击左侧表格的操作按钮查看交互结果。</div>
+            </article>
+          </div>
+        </section>
+
+        <section id="upload" class="screen">
+          <div class="grid cols-2">
+            <article class="card">
+              <h2>XMind 上传解析</h2>
+              <div class="form-row">
+                <label>项目</label>
+                <select>
+                  <option>移动端测试平台</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>需求</label>
+                <select>
+                  <option>REQ-001 登录流程改造</option>
+                  <option>REQ-002 消息中心优化</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>文件</label>
+                <input type="file" accept=".xmind" />
+              </div>
+              <div class="actions">
+                <button class="primary" id="mockUpload">上传并解析</button>
+                <button data-screen-target="requirements">取消</button>
+              </div>
+              <div class="result-box" id="uploadResult">点击“上传并解析”后，这里会显示解析结果。</div>
+            </article>
+
+            <article class="card">
+              <h2>上传后的展现</h2>
+              <p class="tip">成功后不展示 XMind 原始脑图，而是展示平台解析后的树形结构。用户在平台里编辑树，导出时再生成新的 XMind。</p>
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <th>支持文件</th>
+                    <td>新版 `.xmind`，压缩包内包含 `content.json`</td>
+                  </tr>
+                  <tr>
+                    <th>不支持</th>
+                    <td>旧版 `content.xml`、非 XMind 文件、空模板</td>
+                  </tr>
+                  <tr>
+                    <th>保存方式</th>
+                    <td>原文件进 `backend/storage/files`，解析树进 MySQL</td>
+                  </tr>
+                </tbody>
+              </table>
+            </article>
+          </div>
+        </section>
+
+        <section id="editor" class="screen">
+          <div class="workspace">
+            <article class="card">
+              <h2>用例树</h2>
+              <div class="status-line">
+                <span class="tag blue">REQ-001 登录流程改造</span>
+                <span class="tag green">已保存</span>
+              </div>
+              <ul class="tree">
+                <li>
+                  <span class="node" data-node-name="登录模块" data-node-type="模块" data-node-desc="一级节点，由 XMind 一级主题解析而来。">登录模块</span>
+                  <ul>
+                    <li>
+                      <span class="node selected" data-node-name="密码登录成功" data-node-type="用例" data-node-desc="验证用户输入正确账号密码后可以进入系统首页。">密码登录成功</span>
+                      <ul>
+                        <li><span class="node" data-node-name="输入有效账号和密码" data-node-type="步骤" data-node-desc="步骤节点，来自 XMind 三级主题。">输入有效账号和密码</span></li>
+                        <li><span class="node" data-node-name="点击登录按钮" data-node-type="步骤" data-node-desc="步骤节点，描述用户操作。">点击登录按钮</span></li>
+                        <li><span class="node" data-node-name="进入系统首页" data-node-type="预期" data-node-desc="预期结果节点，来自 XMind 四级主题。">进入系统首页</span></li>
+                      </ul>
+                    </li>
+                    <li><span class="node" data-node-name="密码错误提示" data-node-type="用例" data-node-desc="验证密码错误时展示错误提示。">密码错误提示</span></li>
+                  </ul>
+                </li>
+              </ul>
+              <p class="prototype-note">点击任意节点，右侧表单会切换成该节点内容。真实系统会支持新增、删除、重命名和调整层级。</p>
+            </article>
+
+            <article class="card">
+              <h2>节点详情与编辑</h2>
+              <div class="form-row">
+                <label>名称</label>
+                <input id="nodeName" value="密码登录成功" />
+              </div>
+              <div class="form-row">
+                <label>类型</label>
+                <select id="nodeType">
+                  <option>模块</option>
+                  <option selected>用例</option>
+                  <option>步骤</option>
+                  <option>预期</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>说明</label>
+                <textarea id="nodeDesc">验证用户输入正确账号密码后可以进入系统首页。</textarea>
+              </div>
+              <div class="actions">
+                <button id="mockAddChild">新增子节点</button>
+                <button class="danger" id="mockDelete">删除节点</button>
+                <button class="primary" id="mockSave">保存修改</button>
+                <button data-screen-target="export">导出 XMind</button>
+              </div>
+              <div class="result-box" id="editorResult">当前选中：密码登录成功。修改后点击“保存修改”。</div>
+            </article>
+          </div>
+        </section>
+
+        <section id="export" class="screen">
+          <div class="grid cols-2">
+            <article class="card">
+              <h2>导出与下载</h2>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>文件类型</th>
+                    <th>文件名</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>原始上传文件</td>
+                    <td>REQ-001-login.xmind</td>
+                    <td><button id="mockDownloadOriginal">下载原文件</button></td>
+                  </tr>
+                  <tr>
+                    <td>平台导出文件</td>
+                    <td id="exportedFileName">暂无</td>
+                    <td><button class="primary" id="mockExport">生成并下载</button></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="result-box" id="exportResult">点击“生成并下载”后，系统会按当前用例树生成新的 XMind。</div>
+            </article>
+
+            <article class="card">
+              <h2>导出规则</h2>
+              <p class="tip">导出不会修改原始上传文件。系统会生成一个新文件，并记录导出时间和文件地址。</p>
+              <p><strong>文件来源：</strong>MySQL 中当前最新的用例树。</p>
+              <p><strong>文件去向：</strong>生成的新 `.xmind` 文件保存到后端本地目录。</p>
+              <p><strong>下载行为：</strong>点击下载时通过后端文件接口获取。</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="rules" class="screen">
+          <div class="grid cols-2">
+            <article class="card">
+              <h2>业务规则</h2>
+              <ul>
+                <li>一期不做登录和权限，进入系统即可操作。</li>
+                <li>用例按“项目 - 需求 - 用例集 - 用例树”组织。</li>
+                <li>上传前必须选择项目和需求。</li>
+                <li>只支持新版 `.xmind` 的 `content.json`。</li>
+                <li>平台编辑不会覆盖原始文件。</li>
+                <li>导出时根据平台当前数据生成新的 `.xmind`。</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h2>验收标准</h2>
+              <ul>
+                <li>用户能从需求列表进入上传、查看和导出页面。</li>
+                <li>上传符合模板的 XMind 后能看到用例树。</li>
+                <li>点击树节点时右侧详情随之变化。</li>
+                <li>编辑节点并保存后，刷新页面数据不丢失。</li>
+                <li>导出的 XMind 可以被 XMind 客户端打开。</li>
+                <li>上传非法文件或不支持版本时给出明确错误。</li>
+              </ul>
+              <p class="tip warning">本 HTML 是可点击说明原型，不连接真实后端，不会真正上传或生成文件。</p>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const screens = [...document.querySelectorAll('.screen')];
+      const navButtons = [...document.querySelectorAll('.nav-button')];
+      const globalResult = document.querySelector('#globalResult');
+
+      function showScreen(screenId, resultText) {
+        screens.forEach((screen) => screen.classList.toggle('active', screen.id === screenId));
+        navButtons.forEach((button) => button.classList.toggle('active', button.dataset.screen === screenId));
+        if (resultText && globalResult) {
+          globalResult.textContent = '当前操作：' + resultText;
+        }
+      }
+
+      document.querySelectorAll('[data-screen-target]').forEach((element) => {
+        element.addEventListener('click', () => {
+          const target = element.dataset.screenTarget;
+          const result = element.dataset.result || '切换到“' + element.textContent.trim() + '”对应页面。';
+          showScreen(target, result);
+
+          const localResult = document.querySelector('#' + target + 'Result');
+          if (localResult) {
+            localResult.textContent = result;
+          }
+        });
+      });
+
+      navButtons.forEach((button) => {
+        button.addEventListener('click', () => showScreen(button.dataset.screen, '通过左侧菜单切换页面。'));
+      });
+
+      document.querySelector('#mockUpload').addEventListener('click', () => {
+        const text = '解析成功：已保存原始文件，生成 1 个模块、2 条用例、3 个步骤/预期节点。下一步进入用例树编辑页。';
+        document.querySelector('#uploadResult').textContent = text;
+        showScreen('editor', text);
+      });
+
+      document.querySelectorAll('.node').forEach((node) => {
+        node.addEventListener('click', () => {
+          document.querySelectorAll('.node').forEach((item) => item.classList.remove('selected'));
+          node.classList.add('selected');
+          document.querySelector('#nodeName').value = node.dataset.nodeName;
+          document.querySelector('#nodeType').value = node.dataset.nodeType;
+          document.querySelector('#nodeDesc').value = node.dataset.nodeDesc;
+          document.querySelector('#editorResult').textContent = '当前选中：' + node.dataset.nodeName + '。右侧表单已切换为该节点内容。';
+        });
+      });
+
+      document.querySelector('#mockAddChild').addEventListener('click', () => {
+        document.querySelector('#editorResult').textContent = '点击后真实系统会在当前选中节点下新增一个空子节点，并自动聚焦名称输入框。';
+      });
+
+      document.querySelector('#mockDelete').addEventListener('click', () => {
+        document.querySelector('#editorResult').textContent = '点击后真实系统会弹出确认框；确认后删除当前节点及其子节点。';
+      });
+
+      document.querySelector('#mockSave').addEventListener('click', () => {
+        const name = document.querySelector('#nodeName').value;
+        document.querySelector('#editorResult').textContent = '保存成功：节点“' + name + '”已写入后端，刷新页面后仍会保留。';
+      });
+
+      document.querySelector('#mockExport').addEventListener('click', () => {
+        document.querySelector('#exportedFileName').textContent = 'REQ-001-login-exported.xmind';
+        document.querySelector('#exportResult').textContent = '导出成功：已根据当前用例树生成新 XMind，并展示下载入口。';
+      });
+
+      document.querySelector('#mockDownloadOriginal').addEventListener('click', () => {
+        document.querySelector('#exportResult').textContent = '真实系统会通过文件下载接口返回原始上传的 XMind 文件。';
+      });
+    </script>
+  </body>
+</html>
