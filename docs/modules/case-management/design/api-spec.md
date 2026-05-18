@@ -33,6 +33,8 @@ Create request:
 
 ## Case Suites
 
+- `GET /case-suites`: search case suites (`projectId`, `requirementId` optional).
+- `GET /requirements/{requirementId}/case-suites`: list case suites under a requirement.
 - `POST /requirements/{requirementId}/case-suites/upload`: upload and parse `.xmind`.
 - `GET /case-suites/{suiteId}`: get suite metadata and case tree.
 - `PUT /case-suites/{suiteId}/nodes`: save edited case tree.

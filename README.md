@@ -5,13 +5,29 @@
 ## 目录结构
 
 - `frontend/`：Vue 3 + Vite + TypeScript + Element Plus 前端应用骨架。
-- `backend/`：Spring Boot 2.7 + Java 8 后端服务骨架。
+- `backend/`：Spring Boot 2.7 + Java 8 后端服务，按企业级分层目录组织。
 - `docs/`：按项目、模块和需求迭代分类的文档目录。
 - `deploy/`：MySQL 本地部署模板。
 
+## 后端目录结构
+
+```text
+backend/src/main/java/com/testplatform/
+├── TestPlatformApplication.java
+├── common/                 # 通用响应、异常、基础工具
+├── framework/              # Web、跨域、框架级配置
+├── infrastructure/         # 文件存储、外部系统、基础设施适配
+├── modules/                # 业务模块
+│   ├── project/            # 项目管理
+│   └── requirement/        # 需求管理
+└── system/                 # 健康检查、系统级接口
+```
+
+业务模块内部统一按 `controller / service / mapper / entity / dto` 分层。
+
 ## 构建方式
 
-整个项目统一使用 Maven 作为后端构建和依赖管理工具。后端模块以 `backend/pom.xml` 为入口，当前兼容本机 JDK 8 环境；后续如需升级 Spring Boot 3，需要先切换到 JDK 17。
+整个项目使用根目录 `pom.xml` 聚合 Maven 模块，目前纳入 Maven 管理的是 `backend` 后端模块。当前兼容本机 JDK 8 环境；后续如需升级 Spring Boot 3，需要先切换到 JDK 17。
 
 ## 本地启动
 
@@ -25,8 +41,7 @@ docker compose up -d
 2. 启动后端：
 
 ```bash
-cd backend
-mvn spring-boot:run
+mvn -pl backend org.springframework.boot:spring-boot-maven-plugin:2.7.18:run
 ```
 
 后端默认端口为 `8080`，健康检查接口为 `GET /api/health`。
@@ -57,7 +72,7 @@ npm run dev
 
 - 后端通用响应、异常处理、跨域配置。
 - Flyway 数据库初始化脚本。
-- 项目创建和项目列表接口。
-- 需求创建和需求列表接口。
-- 本地文件存储配置和基础服务。
-- 前端路由、项目管理页、需求管理页、用例管理入口、文件导出入口。
+- 项目、需求 CRUD 接口。
+- 用例集上传解析（新版 XMind `content.json`）、用例树查询与保存、XMind 导出、文件下载。
+- 本地文件存储（原始与导出文件）。
+- 前端项目管理、需求管理、用例树编辑、文件导出下载全流程。

@@ -2,7 +2,7 @@
   <el-container class="app-shell">
     <el-aside width="232px" class="sidebar">
       <div class="brand">测试平台</div>
-      <el-menu :default-active="$route.path" router class="nav">
+      <el-menu :default-active="activeMenu" router class="nav">
         <el-menu-item index="/projects">项目管理</el-menu-item>
         <el-menu-item index="/requirements">需求管理</el-menu-item>
         <el-menu-item index="/cases">用例管理</el-menu-item>
@@ -33,4 +33,10 @@ const route = useRoute();
 
 const routeTitle = computed(() => String(route.meta.title ?? '测试平台'));
 const routeDescription = computed(() => String(route.meta.description ?? 'XMind 用例管理一期'));
+const activeMenu = computed(() => {
+  if (route.path.startsWith('/cases')) {
+    return '/cases';
+  }
+  return route.path;
+});
 </script>

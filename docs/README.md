@@ -11,7 +11,9 @@ docs/
 │   ├── ai-rules.md
 │   └── architecture.md
 └── modules/
-    └── case-management/
+    ├── project-management/        # 平台基础：项目（待补充设计文档）
+    ├── requirement-management/    # 平台基础：需求（待补充设计文档）
+    └── case-management/           # 一期核心：XMind 用例
         ├── design/
         │   └── api-spec.md
         └── requirements/

@@ -12,23 +12,24 @@
 
 ## Backend Phase 1
 
-- Define project, requirement, case suite, case node, and file object tables.
-- Implement project and requirement APIs.
-- Implement local file upload and download service.
-- Implement modern XMind `content.json` parser.
-- Implement case tree query and save APIs.
-- Implement XMind export service.
+- Define project, requirement, case suite, case node, and file object tables. Done.
+- Implement project and requirement APIs. Done.
+- Implement local file upload and download service. Done.
+- Implement modern XMind `content.json` parser. Done.
+- Implement case tree query and save APIs. Done.
+- Implement XMind export service. Done.
+- Implement case suite search API (`GET /case-suites`). Done.
 
 ## Frontend Phase 1
 
-- Implement project and requirement management views.
-- Implement XMind upload flow.
-- Implement case suite list and detail view.
-- Implement tree editor for case nodes.
-- Implement export and download flow.
+- Implement project and requirement management views. Done.
+- Implement XMind upload flow. Done.
+- Implement case suite list and detail view. Done.
+- Implement tree editor for case nodes (含拖拽排序). Done.
+- Implement export and download flow. Done.
 
 ## Verification
 
-- Add parser unit tests.
-- Add service and controller tests for upload, save, and export.
-- Run frontend typecheck and production build.
+- Add parser unit tests. Done.
+- Add XMind parse/export round-trip tests. Done.
+- Run frontend typecheck and production build. Done.

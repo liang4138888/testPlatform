@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import ProjectView from '../views/ProjectView.vue';
 import RequirementView from '../views/RequirementView.vue';
-import CaseView from '../views/CaseView.vue';
+import CaseSuiteListView from '../views/CaseSuiteListView.vue';
+import CaseEditorView from '../views/CaseEditorView.vue';
 import FileView from '../views/FileView.vue';
 
 const router = createRouter({
@@ -29,10 +30,18 @@ const router = createRouter({
     },
     {
       path: '/cases',
-      component: CaseView,
+      component: CaseSuiteListView,
       meta: {
         title: '用例管理',
-        description: '上传 XMind、解析用例树、在线编辑并导出。'
+        description: '查看全部用例集，进入编辑或导出。'
+      }
+    },
+    {
+      path: '/cases/edit',
+      component: CaseEditorView,
+      meta: {
+        title: '用例编辑',
+        description: '编辑用例树结构，支持拖拽排序与层级调整。'
       }
     },
     {

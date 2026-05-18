@@ -10,6 +10,8 @@
 ## Backend Rules
 
 - Use Spring Boot 2.7 and Java 8 in the current local environment. Upgrade to Spring Boot 3 only after switching the project JDK to 17.
+- Keep backend packages under `common`, `framework`, `infrastructure`, `modules`, and `system`.
+- Put business code under `modules/{module}/controller|service|mapper|entity|dto`.
 - Keep controllers thin; put business logic in services.
 - Store files in the configured local directory and metadata in MySQL.
 - Parse only modern `.xmind` files with `content.json` in phase 1.

@@ -17,6 +17,14 @@ The platform is a front-end/back-end separated application.
 - XMind parser/exporter: reads modern `.xmind` `content.json` and exports edited data back to `.xmind`.
 - File service: stores original and exported files in the local file directory.
 
+## Backend Package Layout
+
+- `com.testplatform.common`: shared response objects, exceptions, and common utilities.
+- `com.testplatform.framework`: Spring MVC, CORS, and framework-level configuration.
+- `com.testplatform.infrastructure`: local file storage and future external adapters.
+- `com.testplatform.modules`: business modules; each module keeps `controller`, `service`, `mapper`, `entity`, and `dto`.
+- `com.testplatform.system`: system-level endpoints such as health checks.
+
 ## Data Flow
 
 1. User selects a project and requirement.

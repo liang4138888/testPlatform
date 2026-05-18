@@ -4,21 +4,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.18</version>
-        <relativePath/>
+        <groupId>com.testplatform</groupId>
+        <artifactId>test-platform</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>com.testplatform</groupId>
     <artifactId>test-platform-backend</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
     <name>test-platform-backend</name>
-
-    <properties>
-        <java.version>1.8</java.version>
-        <mybatis-plus.version>3.5.9</mybatis-plus.version>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -44,6 +37,10 @@
             <artifactId>flyway-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
@@ -55,6 +52,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot-maven-plugin.version}</version>
             </plugin>
         </plugins>
     </build>
