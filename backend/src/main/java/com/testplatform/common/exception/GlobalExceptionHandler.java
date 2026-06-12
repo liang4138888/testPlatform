@@ -2,6 +2,10 @@ package com.testplatform.common.exception;
 
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,15 +18,19 @@ import com.testplatform.common.response.ApiResponse;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LogManager.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleBusinessException(BusinessException exception) {
+    public ApiResponse<Void> handleBusinessException(BusinessException exception, HttpServletRequest request) {
+        log.warn("business exception | method={} | path={} | code={} | message={}",
+            request.getMethod(), request.getRequestURI(), exception.getCode(), exception.getMessage());
         return ApiResponse.fail(exception.getCode(), exception.getMessage());
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleValidationException(Exception exception) {
+    public ApiResponse<Void> handleValidationException(Exception exception, HttpServletRequest request) {
         org.springframework.validation.BindingResult bindingResult;
         if (exception instanceof MethodArgumentNotValidException) {
             bindingResult = ((MethodArgumentNotValidException) exception).getBindingResult();
@@ -32,12 +40,14 @@ public class GlobalExceptionHandler {
         String message = bindingResult.getFieldErrors().stream()
             .map(error -> error.getField() + " " + error.getDefaultMessage())
             .collect(Collectors.joining("; "));
+        log.warn("validation exception | method={} | path={} | message={}", request.getMethod(), request.getRequestURI(), message);
         return ApiResponse.fail("VALIDATION_ERROR", message);
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiResponse<Void> handleException(Exception exception) {
+    public ApiResponse<Void> handleException(Exception exception, HttpServletRequest request) {
+        log.error("system exception | method={} | path={}", request.getMethod(), request.getRequestURI(), exception);
         return ApiResponse.fail("INTERNAL_ERROR", "系统异常，请稍后重试");
     }
 }
