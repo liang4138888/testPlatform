@@ -17,6 +17,16 @@
 - Parse only modern `.xmind` files with `content.json` in phase 1.
 - Return clear validation errors for unsupported files or invalid templates.
 
+## Backend Logging Rules
+
+- Use Log4j2 for backend logging; do not add ad-hoc `System.out` or `printStackTrace` output.
+- All `/api/**` requests must go through the common request logging filter so new interfaces automatically output logs.
+- Request logs must include `traceId`, method, path, query/request parameters, request body, response status, response body, client IP, and request cost.
+- Keep log fields in the `key=value` style separated by ` | ` so entries are easy to scan and grep.
+- SQL execution logs must stay enabled through MyBatis Log4j2 logging so executed SQL and parameters are visible during backend debugging.
+- Business exceptions should log as `warn`; unexpected system exceptions should log as `error` with stack trace.
+- Do not log sensitive values in clear text. If future interfaces add passwords, tokens, cookies, or secrets, mask them before logging.
+
 ## Frontend Rules
 
 - Use Vue 3 Composition API and TypeScript.
