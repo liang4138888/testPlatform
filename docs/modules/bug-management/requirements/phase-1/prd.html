@@ -1,0 +1,1088 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bug 管理模块一期原型</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: #1f2937;
+        background: #f3f6fb;
+        font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        min-height: 34px;
+        padding: 0 13px;
+        color: #1f2937;
+        font-weight: 600;
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      button.primary {
+        color: #fff;
+        background: #2563eb;
+        border-color: #2563eb;
+      }
+
+      button.danger {
+        color: #b91c1c;
+        border-color: #fecaca;
+        background: #fff7f7;
+      }
+
+      button.text {
+        min-height: auto;
+        padding: 0;
+        color: #2563eb;
+        background: transparent;
+        border: 0;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 9px 10px;
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+      }
+
+      textarea {
+        min-height: 96px;
+        resize: vertical;
+      }
+
+      .prototype {
+        display: grid;
+        grid-template-columns: 232px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        padding: 20px 14px;
+        color: #fff;
+        background: #172033;
+      }
+
+      .brand {
+        padding: 0 10px 18px;
+        font-size: 22px;
+        font-weight: 800;
+      }
+
+      .menu-title {
+        padding: 14px 10px 8px;
+        color: #94a3b8;
+        font-size: 12px;
+      }
+
+      .nav-button {
+        display: block;
+        width: 100%;
+        margin-bottom: 6px;
+        color: #cbd5e1;
+        text-align: left;
+        background: transparent;
+        border: 0;
+      }
+
+      .nav-button.active,
+      .nav-button:hover {
+        color: #fff;
+        background: rgba(37, 99, 235, 0.95);
+      }
+
+      .main {
+        min-width: 0;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        height: 76px;
+        padding: 0 24px;
+        background: #fff;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .header h1 {
+        margin: 0 0 4px;
+        font-size: 22px;
+      }
+
+      .header p {
+        margin: 0;
+        color: #6b7280;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .avatar {
+        display: inline-flex;
+        width: 34px;
+        height: 34px;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        background: #2563eb;
+        border-radius: 50%;
+      }
+
+      .badge {
+        display: inline-flex;
+        min-width: 20px;
+        height: 20px;
+        align-items: center;
+        justify-content: center;
+        margin-left: 4px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        background: #ef4444;
+        border-radius: 999px;
+      }
+
+      .content {
+        padding: 24px;
+      }
+
+      .screen {
+        display: none;
+      }
+
+      .screen.active {
+        display: block;
+      }
+
+      .card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 20px;
+        border-bottom: 1px solid #eef2f7;
+      }
+
+      .card-header h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .card-body {
+        padding: 20px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .cols-2 {
+        grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+      }
+
+      .cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+
+      .metric {
+        padding: 16px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 26px;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1.2fr auto;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .table th,
+      .table td {
+        padding: 12px;
+        text-align: left;
+        vertical-align: middle;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .table th {
+        color: #4b5563;
+        background: #f9fafb;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tag {
+        display: inline-flex;
+        min-height: 24px;
+        align-items: center;
+        padding: 2px 8px;
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 999px;
+      }
+
+      .tag.blue { color: #1d4ed8; background: #dbeafe; }
+      .tag.green { color: #166534; background: #dcfce7; }
+      .tag.yellow { color: #854d0e; background: #fef9c3; }
+      .tag.red { color: #991b1b; background: #fee2e2; }
+      .tag.gray { color: #374151; background: #e5e7eb; }
+      .tag.purple { color: #6d28d9; background: #ede9fe; }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .form-item.full {
+        grid-column: 1 / -1;
+      }
+
+      .form-item label {
+        display: block;
+        margin-bottom: 7px;
+        color: #4b5563;
+        font-weight: 700;
+      }
+
+      .required::after {
+        content: " *";
+        color: #ef4444;
+      }
+
+      .hint {
+        margin-top: 8px;
+        color: #6b7280;
+        font-size: 13px;
+      }
+
+      .readonly-field {
+        display: flex;
+        min-height: 40px;
+        align-items: center;
+        padding: 9px 10px;
+        color: #374151;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+      }
+
+      .detail-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        gap: 16px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .tab {
+        padding: 10px 12px;
+        color: #6b7280;
+        font-weight: 700;
+      }
+
+      .tab.active {
+        color: #2563eb;
+        border-bottom: 2px solid #2563eb;
+      }
+
+      .image-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .image-card {
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #f8fafc;
+      }
+
+      .upload-zone {
+        display: grid;
+        min-height: 150px;
+        place-items: center;
+        padding: 18px;
+        color: #2563eb;
+        text-align: center;
+        background: #eff6ff;
+        border: 2px dashed #93c5fd;
+        border-radius: 12px;
+      }
+
+      .upload-zone strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+
+      .upload-zone p {
+        margin: 0;
+        color: #64748b;
+      }
+
+      .image-preview {
+        display: grid;
+        height: 116px;
+        place-items: center;
+        color: #1d4ed8;
+        font-weight: 700;
+        background:
+          linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(124, 58, 237, 0.16)),
+          repeating-linear-gradient(45deg, #eef2ff 0, #eef2ff 10px, #f8fafc 10px, #f8fafc 20px);
+      }
+
+      .image-preview.screen-shot {
+        color: #1e293b;
+        background:
+          linear-gradient(#fff 0 24px, transparent 24px),
+          linear-gradient(90deg, #dbeafe 0 22%, #f8fafc 22% 100%);
+      }
+
+      .image-preview.console-shot {
+        color: #86efac;
+        background:
+          linear-gradient(135deg, rgba(34, 197, 94, 0.16), rgba(14, 165, 233, 0.16)),
+          #111827;
+      }
+
+      .image-preview.network-shot {
+        color: #7c2d12;
+        background:
+          linear-gradient(#fff7ed 0 28px, transparent 28px),
+          repeating-linear-gradient(0deg, #ffedd5 0, #ffedd5 18px, #fff7ed 18px, #fff7ed 36px);
+      }
+
+      .image-preview.mobile-shot {
+        color: #581c87;
+        background:
+          radial-gradient(circle at 50% 14px, #c084fc 0 6px, transparent 7px),
+          linear-gradient(90deg, #f3e8ff 30%, #faf5ff 30% 70%, #f3e8ff 70%);
+      }
+
+      .image-preview.error-shot {
+        color: #991b1b;
+        background:
+          linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(251, 191, 36, 0.18)),
+          repeating-linear-gradient(45deg, #fee2e2 0, #fee2e2 8px, #fff7ed 8px, #fff7ed 16px);
+      }
+
+      .image-preview.flow-shot {
+        color: #0f766e;
+        background:
+          radial-gradient(circle at 24% 38%, #99f6e4 0 18px, transparent 19px),
+          radial-gradient(circle at 72% 62%, #bfdbfe 0 20px, transparent 21px),
+          linear-gradient(135deg, #ecfeff, #f0fdf4);
+      }
+
+      .image-name {
+        padding: 8px 10px;
+        color: #4b5563;
+        font-size: 13px;
+      }
+
+      .image-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 0 10px 9px;
+        color: #94a3b8;
+        font-size: 12px;
+      }
+
+      .comment {
+        padding: 12px;
+        margin-bottom: 10px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+      }
+
+      .comment-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .timeline {
+        position: relative;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .timeline li {
+        position: relative;
+        padding: 0 0 16px 22px;
+        border-left: 2px solid #e5e7eb;
+      }
+
+      .timeline li::before {
+        position: absolute;
+        top: 0;
+        left: -6px;
+        width: 10px;
+        height: 10px;
+        content: "";
+        background: #2563eb;
+        border-radius: 50%;
+      }
+
+      .notice-item {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+        padding: 14px 0;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .notice-dot {
+        width: 9px;
+        height: 9px;
+        margin-top: 8px;
+        background: #ef4444;
+        border-radius: 50%;
+      }
+
+      .notice-dot.read {
+        background: #d1d5db;
+      }
+
+      .permission-grid {
+        display: grid;
+        grid-template-columns: 180px repeat(3, 1fr);
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .permission-grid div {
+        padding: 12px;
+        border-right: 1px solid #e5e7eb;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .permission-grid div:nth-child(4n) {
+        border-right: 0;
+      }
+
+      .permission-grid .head {
+        color: #4b5563;
+        font-weight: 800;
+        background: #f9fafb;
+      }
+
+      .modal-mask {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(15, 23, 42, 0.55);
+      }
+
+      .modal-mask.active {
+        display: flex;
+      }
+
+      .modal {
+        width: min(860px, 100%);
+        max-height: 92vh;
+        overflow: auto;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+      }
+
+      .drawer {
+        width: min(1120px, 100%);
+      }
+
+      .modal-header,
+      .modal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 18px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .modal-footer {
+        justify-content: flex-end;
+        border-top: 1px solid #e5e7eb;
+        border-bottom: 0;
+      }
+
+      .modal-header h2 {
+        margin: 0;
+      }
+
+      .modal-body {
+        padding: 18px;
+      }
+
+      .toast {
+        position: fixed;
+        right: 22px;
+        bottom: 22px;
+        display: none;
+        max-width: 420px;
+        padding: 12px 14px;
+        color: #1e3a8a;
+        background: #eff6ff;
+        border: 1px solid #93c5fd;
+        border-radius: 10px;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+      }
+
+      .toast.active {
+        display: block;
+      }
+
+      .empty {
+        display: grid;
+        min-height: 120px;
+        place-items: center;
+        color: #64748b;
+        text-align: center;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 10px;
+      }
+
+      @media (max-width: 1180px) {
+        .prototype,
+        .cols-2,
+        .cols-3,
+        .metric-grid,
+        .toolbar,
+        .detail-shell,
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .header {
+          height: auto;
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 18px 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="prototype">
+      <aside class="sidebar">
+        <div class="brand">测试平台</div>
+        <div class="menu-title">主功能</div>
+        <button class="nav-button" data-page="login">登录页</button>
+        <button class="nav-button active" data-page="dashboard">缺陷总览</button>
+        <button class="nav-button" data-page="bug-list">缺陷列表</button>
+        <button class="nav-button" data-page="bug-detail">缺陷详情</button>
+        <button class="nav-button" data-page="notifications">通知中心</button>
+        <div class="menu-title">管理</div>
+        <button class="nav-button" data-page="users">用户与权限</button>
+        <button class="nav-button" data-page="acceptance">验收规则</button>
+      </aside>
+
+      <main class="main">
+        <header class="header">
+          <div>
+            <h1 id="pageTitle">缺陷总览</h1>
+            <p id="pageDesc">查看 Bug 状态分布、待处理数量和协作入口。</p>
+          </div>
+          <div class="header-actions">
+            <button data-page-target="notifications">站内通知 <span class="badge">3</span></button>
+            <span class="avatar">测</span>
+            <span>测试张三</span>
+            <button data-page-target="login">退出</button>
+          </div>
+        </header>
+
+        <section class="content">
+          <section id="login" class="screen">
+            <div class="grid cols-2">
+              <article class="card">
+                <div class="card-header"><h2>登录测试平台</h2></div>
+                <div class="card-body">
+                  <div class="form-grid">
+                    <div class="form-item full"><label class="required">用户名</label><input aria-label="用户名" value="tester" /></div>
+                    <div class="form-item full"><label class="required">密码</label><input aria-label="密码" type="password" value="123456" /></div>
+                  </div>
+                  <div class="actions" style="margin-top: 16px">
+                    <button class="primary" data-page-target="dashboard" data-toast="登录成功：保存 Token，加载当前用户角色和权限。">登录</button>
+                  </div>
+                </div>
+              </article>
+              <article class="card">
+                <div class="card-header"><h2>登录后行为</h2></div>
+                <div class="card-body">
+                  <p>业务页面需要登录后访问。</p>
+                  <p>登录成功后，后端返回 Token、用户信息、角色和权限点。</p>
+                  <p>前端根据权限控制按钮展示，例如新建、指派、关闭 Bug。</p>
+                  <p class="tag blue">Authorization: Bearer token</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section id="dashboard" class="screen active">
+            <div class="metric-grid">
+              <div class="metric"><span class="muted">待修复</span><strong>18</strong><span class="tag yellow">待修复</span></div>
+              <div class="metric"><span class="muted">已修复</span><strong>9</strong><span class="tag blue">已修复</span></div>
+              <div class="metric"><span class="muted">修复完成</span><strong>12</strong><span class="tag green">修复完成</span></div>
+              <div class="metric"><span class="muted">严重问题</span><strong>4</strong><span class="tag red">CRITICAL</span></div>
+            </div>
+
+            <div class="grid cols-2">
+              <article class="card">
+                <div class="card-header">
+                  <h2>我的待修复 Bug</h2>
+                  <button class="primary" data-modal="createBug">新建 Bug</button>
+                </div>
+                <div class="card-body">
+                  <table class="table">
+                    <thead><tr><th>编号</th><th>标题</th><th>严重级别</th><th>状态</th><th>操作</th></tr></thead>
+                    <tbody>
+                      <tr><td>BUG-0001</td><td>登录按钮点击无响应</td><td><span class="tag red">严重</span></td><td><span class="tag yellow">待修复</span></td><td><button class="text" data-page-target="bug-detail">查看</button></td></tr>
+                      <tr><td>BUG-0002</td><td>验证码图片偶现加载失败</td><td><span class="tag yellow">高</span></td><td><span class="tag blue">修复完成</span></td><td><button class="text" data-page-target="bug-detail">查看</button></td></tr>
+                      <tr><td>BUG-0003</td><td>消息中心已读状态不同步</td><td><span class="tag blue">中</span></td><td><span class="tag yellow">待修复</span></td><td><button class="text" data-page-target="bug-detail">查看</button></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+
+              <article class="card">
+                <div class="card-header"><h2>协作动态</h2></div>
+                <div class="card-body">
+                  <ul class="timeline">
+                    <li><strong>测试张三 创建 BUG-0001</strong><br /><span class="muted">需求 REQ-001 登录流程改造</span></li>
+                    <li><strong>开发李四 评论 BUG-0001</strong><br /><span class="muted">已复现，初步判断是接口超时。</span></li>
+                    <li><strong>开发李四 提交已修复 BUG-0002</strong><br /><span class="muted">状态流转：待修复 → 已修复</span></li>
+                    <li><strong>测试王五 上传图片</strong><br /><span class="muted">network-error.png</span></li>
+                  </ul>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section id="bug-list" class="screen">
+            <article class="card">
+              <div class="card-header">
+                <h2>缺陷列表</h2>
+                <div class="actions">
+                  <button>导出列表</button>
+                  <button class="primary" data-modal="createBug">新建 Bug</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="toolbar">
+                  <select aria-label="项目筛选"><option>项目：测试平台</option></select>
+                  <select aria-label="需求筛选"><option>需求：REQ-001 登录流程改造</option><option>REQ-002 消息中心优化</option></select>
+                  <select aria-label="状态筛选"><option>状态：全部</option><option>待修复</option><option>已修复</option><option>修复完成</option></select>
+                  <select aria-label="指派人筛选"><option>指派人：全部</option><option>开发李四</option><option>开发赵六</option></select>
+                  <input aria-label="搜索 Bug 编号或标题" placeholder="搜索 Bug 编号 / 标题" />
+                  <button>查询</button>
+                </div>
+                <table class="table">
+                  <thead>
+                    <tr><th>编号</th><th>标题</th><th>需求</th><th>严重级别</th><th>优先级</th><th>状态</th><th>报告人</th><th>指派人</th><th>图片</th><th>更新时间</th><th>操作</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>BUG-0001</td><td>登录按钮点击无响应</td><td>REQ-001</td><td><span class="tag red">严重</span></td><td><span class="tag red">高</span></td>
+                      <td><select aria-label="BUG-0001 状态" data-toast="测试提交：BUG-0001 状态已更新。"><option>待修复</option><option>已修复</option><option>修复完成</option></select></td>
+                      <td>测试张三</td><td>开发李四</td><td>3</td><td>2026-05-20 10:12</td><td><button class="text" data-page-target="bug-detail">查看</button></td>
+                    </tr>
+                    <tr>
+                      <td>BUG-0002</td><td>验证码图片偶现加载失败</td><td>REQ-001</td><td><span class="tag yellow">高</span></td><td><span class="tag yellow">中</span></td>
+                      <td><select aria-label="BUG-0002 状态" data-toast="开发/产品提交：BUG-0002 状态已更新为已修复。"><option>待修复</option><option selected>已修复</option><option>修复完成</option></select></td>
+                      <td>测试王五</td><td>开发赵六</td><td>1</td><td>2026-05-20 09:30</td><td><button class="text" data-page-target="bug-detail">查看</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+          <section id="bug-detail" class="screen">
+            <div class="detail-shell">
+              <article class="card">
+                <div class="card-header">
+                  <div>
+                    <h2>BUG-0001 登录按钮点击无响应</h2>
+                    <p class="muted" style="margin: 6px 0 0">REQ-001 登录流程改造 · 登录流程用例集</p>
+                  </div>
+                  <div class="actions">
+                    <button>复制链接</button>
+                    <button class="primary" data-toast="保存成功：写入操作历史并按规则通知相关用户。">保存修改</button>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="tabs">
+                    <div class="tab active">基本信息</div>
+                    <div class="tab">图片附件</div>
+                    <div class="tab">评论</div>
+                    <div class="tab">操作历史</div>
+                  </div>
+
+                  <div class="form-grid">
+                    <div class="form-item"><label>当前状态</label><div class="readonly-field"><span class="tag yellow">待修复</span></div><p class="hint">缺陷状态只有：待修复、已修复、修复完成。列表可直接修改状态；待修复和修复完成由测试提交，已修复可由开发或产品提交。</p></div>
+                    <div class="form-item"><label>指派人</label><select aria-label="Bug 指派人"><option>开发李四</option><option>开发赵六</option></select></div>
+                    <div class="form-item"><label>严重级别</label><select aria-label="Bug 严重级别"><option>严重</option><option>高</option><option>中</option><option>低</option></select></div>
+                    <div class="form-item"><label>优先级</label><select aria-label="Bug 优先级"><option>高</option><option>中</option><option>低</option></select></div>
+                    <div class="form-item full"><label>标题</label><input aria-label="Bug 标题" value="登录按钮点击无响应" /></div>
+                    <div class="form-item full"><label>描述</label><textarea aria-label="Bug 描述">输入账号密码后点击登录按钮无响应，控制台无明显报错，Network 面板显示登录接口长时间 pending。</textarea></div>
+                  </div>
+
+                  <div class="actions" style="margin-top: 16px">
+                    <button class="primary" data-toast="开发/产品提交已修复：状态变更为已修复，并通知测试复验。">提交已修复</button>
+                    <button data-toast="测试确认修复完成：状态变更为修复完成，并写入操作历史。">测试确认修复完成</button>
+                    <button class="danger" data-toast="测试重新提交待修复：状态变更为待修复，并通知指派人。">重新打开为待修复</button>
+                  </div>
+
+                  <h3 style="margin-top: 20px">图片附件</h3>
+                  <div class="upload-zone" data-toast="点击后选择本地图片上传，支持 png/jpg/jpeg/gif/webp，单张 10MB。">
+                    <div>
+                      <strong>点击或拖拽图片到这里上传</strong>
+                      <p>支持多张图片，可用于放置问题截图、控制台截图、网络请求截图。</p>
+                    </div>
+                  </div>
+                  <div class="actions" style="margin: 12px 0">
+                    <button class="primary" data-toast="选择本地图片上传，支持 png/jpg/jpeg/gif/webp，单张 10MB。">选择图片</button>
+                    <button>下载全部</button>
+                  </div>
+                  <div class="image-grid">
+                    <div class="image-card">
+                      <div class="image-preview screen-shot">登录页截图</div>
+                      <div class="image-name">login-error.png</div>
+                      <div class="image-meta"><span>1.2MB</span><span>预览 / 下载</span></div>
+                    </div>
+                    <div class="image-card">
+                      <div class="image-preview console-shot">Console Error</div>
+                      <div class="image-name">console-error.png</div>
+                      <div class="image-meta"><span>860KB</span><span>预览 / 下载</span></div>
+                    </div>
+                    <div class="image-card">
+                      <div class="image-preview network-shot">Network Pending</div>
+                      <div class="image-name">network-pending.png</div>
+                      <div class="image-meta"><span>940KB</span><span>预览 / 下载</span></div>
+                    </div>
+                    <div class="image-card">
+                      <div class="image-preview mobile-shot">移动端复现</div>
+                      <div class="image-name">mobile-login.webp</div>
+                      <div class="image-meta"><span>720KB</span><span>预览 / 下载</span></div>
+                    </div>
+                    <div class="image-card">
+                      <div class="image-preview error-shot">异常弹窗</div>
+                      <div class="image-name">error-dialog.jpg</div>
+                      <div class="image-meta"><span>1.8MB</span><span>预览 / 下载</span></div>
+                    </div>
+                    <div class="image-card">
+                      <div class="image-preview flow-shot">流程标注图</div>
+                      <div class="image-name">login-flow-mark.png</div>
+                      <div class="image-meta"><span>1.4MB</span><span>预览 / 下载</span></div>
+                    </div>
+                  </div>
+
+                  <h3 style="margin-top: 20px">评论流</h3>
+                  <div class="comment"><div class="comment-head"><strong>测试张三</strong><span class="muted">2026-05-20 10:12</span></div><p>已补充网络请求截图，请协助排查。</p></div>
+                  <div class="comment"><div class="comment-head"><strong>开发李四</strong><span class="muted">2026-05-20 10:30</span></div><p>已复现，初步判断是登录接口超时。</p></div>
+                  <textarea aria-label="评论内容" placeholder="输入评论，评论后会通知报告人和指派人"></textarea>
+                  <div class="actions" style="margin-top: 10px"><button class="primary" data-toast="评论成功：追加评论流、写入历史、生成站内通知。">发表评论</button></div>
+                </div>
+              </article>
+
+              <aside class="card">
+                <div class="card-header"><h2>操作历史</h2></div>
+                <div class="card-body">
+                  <ul class="timeline">
+                    <li><strong>创建 Bug</strong><br /><span class="muted">测试张三 创建 BUG-0001</span></li>
+                    <li><strong>指派人变更</strong><br /><span class="muted">未指派 → 开发李四</span></li>
+                    <li><strong>上传图片</strong><br /><span class="muted">测试张三 上传 login-error.png</span></li>
+                    <li><strong>提交已修复</strong><br /><span class="muted">开发李四：待修复 → 已修复</span></li>
+                    <li><strong>测试确认修复完成</strong><br /><span class="muted">测试张三：已修复 → 修复完成</span></li>
+                  </ul>
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <section id="notifications" class="screen">
+            <article class="card">
+              <div class="card-header">
+                <h2>站内通知</h2>
+                <div class="actions"><button>全部已读</button></div>
+              </div>
+              <div class="card-body">
+                <div class="notice-item">
+                  <span class="notice-dot"></span>
+                  <div><strong>你被指派了一个 Bug</strong><p class="muted">BUG-0001 登录按钮点击无响应</p></div>
+                  <button class="text" data-page-target="bug-detail">查看</button>
+                </div>
+                <div class="notice-item">
+                  <span class="notice-dot"></span>
+                  <div><strong>Bug 有新评论</strong><p class="muted">开发李四评论了 BUG-0001</p></div>
+                  <button class="text" data-page-target="bug-detail">查看</button>
+                </div>
+                <div class="notice-item">
+                  <span class="notice-dot read"></span>
+                  <div><strong>Bug 状态变更</strong><p class="muted">BUG-0002 已提交已修复</p></div>
+                  <button class="text" data-page-target="bug-detail">查看</button>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section id="users" class="screen">
+            <div class="grid cols-2">
+              <article class="card">
+                <div class="card-header"><h2>用户列表</h2><button class="primary" data-modal="createUser">新增用户</button></div>
+                <div class="card-body">
+                  <table class="table">
+                    <thead><tr><th>用户名</th><th>姓名</th><th>角色</th><th>状态</th></tr></thead>
+                    <tbody>
+                      <tr><td>admin</td><td>管理员</td><td><span class="tag red">ADMIN</span></td><td><span class="tag green">启用</span></td></tr>
+                      <tr><td>tester</td><td>测试张三</td><td><span class="tag blue">TESTER</span></td><td><span class="tag green">启用</span></td></tr>
+                      <tr><td>dev01</td><td>开发李四</td><td><span class="tag purple">DEVELOPER</span></td><td><span class="tag green">启用</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+              <article class="card">
+                <div class="card-header"><h2>权限矩阵</h2></div>
+                <div class="card-body">
+                  <div class="permission-grid">
+                    <div class="head">权限点</div><div class="head">ADMIN</div><div class="head">TESTER</div><div class="head">DEVELOPER</div>
+                    <div>BUG_VIEW</div><div>是</div><div>是</div><div>指派给自己</div>
+                    <div>BUG_CREATE</div><div>是</div><div>是</div><div>否</div>
+                    <div>BUG_ASSIGN</div><div>是</div><div>是</div><div>否</div>
+                    <div>BUG_COMMENT</div><div>是</div><div>是</div><div>是</div>
+                    <div>BUG_CLOSE</div><div>是</div><div>按配置</div><div>否</div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section id="acceptance" class="screen">
+            <div class="grid cols-3">
+              <article class="card"><div class="card-header"><h2>缺陷规则</h2></div><div class="card-body"><p>Bug 必须关联需求，编号后端自动生成，可选关联用例集。</p></div></article>
+              <article class="card"><div class="card-header"><h2>图片规则</h2></div><div class="card-body"><p>支持多张图片，限制 png/jpg/jpeg/gif/webp，单张 10MB。</p></div></article>
+              <article class="card"><div class="card-header"><h2>协作规则</h2></div><div class="card-body"><p>Bug 状态分为待修复、已修复、修复完成。待修复和修复完成只能由测试提交，已修复可由开发或产品提交；状态可在缺陷列表中直接修改。</p></div></article>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-mask" id="createBugModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>新建 Bug</h2>
+          <button data-close-modal>关闭</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-item"><label>项目</label><input aria-label="项目" value="测试平台" disabled /></div>
+            <div class="form-item"><label class="required">需求</label><select aria-label="需求"><option>REQ-001 登录流程改造</option></select></div>
+            <div class="form-item"><label>用例集</label><select aria-label="用例集"><option>登录流程用例集（可选）</option></select></div>
+            <div class="form-item"><label>指派人</label><select aria-label="指派人"><option>开发李四</option><option>开发赵六</option></select></div>
+            <div class="form-item"><label>严重级别</label><select aria-label="严重级别"><option>严重</option><option>高</option><option>中</option><option>低</option></select></div>
+            <div class="form-item"><label>优先级</label><select aria-label="优先级"><option>高</option><option>中</option><option>低</option></select></div>
+            <div class="form-item full"><label class="required">标题</label><input aria-label="标题" value="登录按钮点击无响应" /></div>
+            <div class="form-item full"><label>描述</label><textarea aria-label="描述">输入账号密码后点击登录按钮无响应，控制台无明显报错。</textarea></div>
+            <div class="form-item full">
+              <label>问题截图</label>
+              <div class="upload-zone" data-toast="新建时可先上传多张问题截图。">
+                <div>
+                  <strong>点击或拖拽图片到这里上传</strong>
+                  <p>支持 png、jpg、jpeg、gif、webp，单张 10MB。</p>
+                </div>
+              </div>
+              <div class="image-grid" style="margin-top: 12px">
+                <div class="image-card">
+                  <div class="image-preview screen-shot">登录页截图</div>
+                  <div class="image-name">login-error.png</div>
+                  <div class="image-meta"><span>1.2MB</span><span>待上传</span></div>
+                </div>
+                <div class="image-card">
+                  <div class="image-preview console-shot">Console Error</div>
+                  <div class="image-name">console-error.png</div>
+                  <div class="image-meta"><span>860KB</span><span>待上传</span></div>
+                </div>
+                <div class="image-card">
+                  <div class="image-preview network-shot">Network Pending</div>
+                  <div class="image-name">network-pending.png</div>
+                  <div class="image-meta"><span>940KB</span><span>待上传</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="hint">提交后由后端生成编号，例如 BUG-0001，初始状态为待修复，并通知指派人。</p>
+        </div>
+        <div class="modal-footer">
+          <button data-close-modal>取消</button>
+          <button class="primary" data-close-modal data-page-target="bug-detail" data-toast="创建成功：系统生成 BUG-0001，写入历史并通知开发李四。">提交</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-mask" id="createUserModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>新增用户</h2>
+          <button data-close-modal>关闭</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-item"><label class="required">用户名</label><input aria-label="新增用户名" value="dev02" /></div>
+            <div class="form-item"><label class="required">姓名</label><input aria-label="新增用户姓名" value="开发赵六" /></div>
+            <div class="form-item"><label>邮箱</label><input aria-label="新增用户邮箱" value="dev02@testplatform.local" /></div>
+            <div class="form-item"><label class="required">角色</label><select aria-label="新增用户角色"><option>DEVELOPER</option><option>TESTER</option><option>ADMIN</option></select></div>
+            <div class="form-item"><label>状态</label><select aria-label="新增用户状态"><option>启用</option><option>禁用</option></select></div>
+            <div class="form-item"><label class="required">初始密码</label><input aria-label="新增用户初始密码" type="password" value="123456" /></div>
+          </div>
+          <p class="hint">保存后用户可作为 Bug 指派人，角色决定可执行的缺陷动作。</p>
+        </div>
+        <div class="modal-footer">
+          <button data-close-modal>取消</button>
+          <button class="primary" data-close-modal data-page-target="users" data-toast="新增用户成功：开发赵六已加入可指派人列表。">保存用户</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">操作完成</div>
+
+    <script>
+      const pageMeta = {
+        login: ["登录页", "用户登录后获取 Token、角色和权限。"],
+        dashboard: ["缺陷总览", "查看 Bug 状态分布、待处理数量和协作入口。"],
+        "bug-list": ["缺陷列表", "按项目、需求、状态、指派人和关键词筛选 Bug。"],
+        "bug-detail": ["缺陷详情", "编辑 Bug、上传图片、评论、查看操作历史。"],
+        notifications: ["通知中心", "查看站内通知、未读数量和关联 Bug。"],
+        users: ["用户与权限", "维护用户、角色和权限矩阵。"],
+        acceptance: ["验收规则", "确认 Bug 模块一期验收范围。"]
+      };
+
+      const screens = document.querySelectorAll(".screen");
+      const navButtons = document.querySelectorAll("[data-page]");
+      const title = document.getElementById("pageTitle");
+      const desc = document.getElementById("pageDesc");
+      const toast = document.getElementById("toast");
+      const modals = {
+        createBug: document.getElementById("createBugModal"),
+        createUser: document.getElementById("createUserModal")
+      };
+
+      function showPage(id) {
+        screens.forEach((screen) => screen.classList.toggle("active", screen.id === id));
+        navButtons.forEach((button) => button.classList.toggle("active", button.dataset.page === id));
+        if (pageMeta[id]) {
+          title.textContent = pageMeta[id][0];
+          desc.textContent = pageMeta[id][1];
+        }
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("active");
+        window.setTimeout(() => toast.classList.remove("active"), 2600);
+      }
+
+      document.querySelectorAll("[data-page], [data-page-target]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const target = button.dataset.page || button.dataset.pageTarget;
+          if (target) showPage(target);
+          if (button.dataset.toast) showToast(button.dataset.toast);
+        });
+      });
+
+      document.querySelectorAll("select[data-toast]").forEach((select) => {
+        select.addEventListener("change", () => {
+          showToast(select.dataset.toast);
+        });
+      });
+
+      document.querySelectorAll("[data-modal]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const targetModal = modals[button.dataset.modal];
+          if (targetModal) targetModal.classList.add("active");
+        });
+      });
+
+      document.querySelectorAll("[data-close-modal]").forEach((button) => {
+        button.addEventListener("click", () => {
+          Object.values(modals).forEach((targetModal) => targetModal.classList.remove("active"));
+        });
+      });
+    </script>
+  </body>
+</html>

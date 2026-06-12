@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -58,6 +59,12 @@ public class CaseSuiteController {
     @GetMapping("/case-suites/{suiteId}")
     public ApiResponse<CaseSuiteResponse> getCaseSuite(@PathVariable Long suiteId) {
         return ApiResponse.ok(caseSuiteService.getSuiteDetail(suiteId));
+    }
+
+    @DeleteMapping("/case-suites/{suiteId}")
+    public ApiResponse<Void> deleteCaseSuite(@PathVariable Long suiteId) {
+        caseSuiteService.deleteSuite(suiteId);
+        return ApiResponse.ok(null);
     }
 
     @GetMapping("/case-suites/{suiteId}/files")

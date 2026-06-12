@@ -16,6 +16,7 @@ public class Requirement {
     private String requirementNo;
     private String name;
     private String description;
+    private Long createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     @TableLogic
@@ -59,6 +60,14 @@ public class Requirement {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Long getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
     }
 
     public LocalDateTime getCreatedAt() {

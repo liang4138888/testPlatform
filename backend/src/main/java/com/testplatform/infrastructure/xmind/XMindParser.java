@@ -82,16 +82,7 @@ public class XMindParser {
     }
 
     static String nodeTypeForDepth(int depth) {
-        switch (depth) {
-            case 1:
-                return "module";
-            case 2:
-                return "case";
-            case 3:
-                return "step";
-            default:
-                return "expected";
-        }
+        return "case";
     }
 
     private String extractNotes(JsonNode topic) {

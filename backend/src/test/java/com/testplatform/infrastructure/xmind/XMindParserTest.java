@@ -32,12 +32,12 @@ class XMindParserTest {
         List<XMindTopicNode> nodes = parser.parse(inputStream);
 
         assertEquals(1, nodes.size());
-        assertEquals("module", nodes.get(0).getNodeType());
+        assertEquals("case", nodes.get(0).getNodeType());
         assertEquals("登录模块", nodes.get(0).getName());
         assertEquals("case", nodes.get(0).getChildren().get(0).getNodeType());
-        assertEquals("step", nodes.get(0).getChildren().get(0).getChildren().get(0).getNodeType());
+        assertEquals("case", nodes.get(0).getChildren().get(0).getChildren().get(0).getNodeType());
         assertEquals(
-            "expected",
+            "case",
             nodes.get(0).getChildren().get(0).getChildren().get(0).getChildren().get(0).getNodeType()
         );
     }
@@ -50,12 +50,12 @@ class XMindParserTest {
     }
 
     @Test
-    void shouldMapDepthToNodeType() {
-        assertEquals("module", XMindParser.nodeTypeForDepth(1));
+    void shouldDefaultImportedNodeTypeToCase() {
+        assertEquals("case", XMindParser.nodeTypeForDepth(1));
         assertEquals("case", XMindParser.nodeTypeForDepth(2));
-        assertEquals("step", XMindParser.nodeTypeForDepth(3));
-        assertEquals("expected", XMindParser.nodeTypeForDepth(4));
-        assertEquals("expected", XMindParser.nodeTypeForDepth(5));
+        assertEquals("case", XMindParser.nodeTypeForDepth(3));
+        assertEquals("case", XMindParser.nodeTypeForDepth(4));
+        assertEquals("case", XMindParser.nodeTypeForDepth(5));
     }
 
     private InputStream toZipInputStream(String entryName, String content) throws Exception {

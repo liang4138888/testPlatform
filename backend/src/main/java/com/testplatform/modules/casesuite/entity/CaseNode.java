@@ -18,6 +18,7 @@ public class CaseNode {
     private String name;
     private String description;
     private Integer sortOrder;
+    private String executionStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     @TableLogic
@@ -77,6 +78,14 @@ public class CaseNode {
 
     public void setSortOrder(Integer sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public String getExecutionStatus() {
+        return executionStatus;
+    }
+
+    public void setExecutionStatus(String executionStatus) {
+        this.executionStatus = executionStatus;
     }
 
     public LocalDateTime getCreatedAt() {

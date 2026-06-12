@@ -17,6 +17,7 @@ public class CaseSuite {
     private Long originalFileId;
     private Long exportedFileId;
     private String status;
+    private Long createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     @TableLogic
@@ -68,6 +69,14 @@ public class CaseSuite {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Long getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
     }
 
     public LocalDateTime getCreatedAt() {

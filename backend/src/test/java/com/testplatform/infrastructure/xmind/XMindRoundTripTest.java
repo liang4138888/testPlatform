@@ -48,9 +48,9 @@ class XMindRoundTripTest {
         XMindTopicNode caseNode = reparsed.get(0).getChildren().get(0);
         XMindTopicNode stepNode = caseNode.getChildren().get(0);
         assertEquals("输入账号密码", stepNode.getName());
-        assertEquals("step", stepNode.getNodeType());
+        assertEquals("case", stepNode.getNodeType());
         assertEquals("进入首页", stepNode.getChildren().get(0).getName());
-        assertEquals("expected", stepNode.getChildren().get(0).getNodeType());
+        assertEquals("case", stepNode.getChildren().get(0).getNodeType());
     }
 
     private InputStream sampleArchive() throws Exception {

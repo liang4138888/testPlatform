@@ -32,6 +32,15 @@ public class FileController {
 
     @GetMapping("/{fileId}/download")
     public ResponseEntity<InputStreamResource> download(@PathVariable Long fileId) throws IOException {
+        return fileResponse(fileId, "attachment");
+    }
+
+    @GetMapping("/{fileId}/preview")
+    public ResponseEntity<InputStreamResource> preview(@PathVariable Long fileId) throws IOException {
+        return fileResponse(fileId, "inline");
+    }
+
+    private ResponseEntity<InputStreamResource> fileResponse(Long fileId, String disposition) throws IOException {
         FileObject fileObject = fileObjectService.getRequiredFile(fileId);
         InputStream inputStream = localStorageService.open(fileObject.getStoragePath());
         String encodedName = URLEncoder.encode(fileObject.getOriginalName(), StandardCharsets.UTF_8.name())
@@ -42,7 +51,7 @@ public class FileController {
             : fileObject.getContentType();
 
         return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedName)
+            .header(HttpHeaders.CONTENT_DISPOSITION, disposition + "; filename*=UTF-8''" + encodedName)
             .contentType(MediaType.parseMediaType(contentType))
             .contentLength(fileObject.getSizeBytes())
             .body(new InputStreamResource(inputStream));

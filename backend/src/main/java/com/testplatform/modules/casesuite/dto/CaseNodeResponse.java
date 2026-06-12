@@ -12,6 +12,7 @@ public class CaseNodeResponse {
     private final String name;
     private final String description;
     private final Integer sortOrder;
+    private final String executionStatus;
     private final List<CaseNodeResponse> children;
 
     public CaseNodeResponse(
@@ -21,6 +22,7 @@ public class CaseNodeResponse {
         String name,
         String description,
         Integer sortOrder,
+        String executionStatus,
         List<CaseNodeResponse> children
     ) {
         this.id = id;
@@ -29,6 +31,7 @@ public class CaseNodeResponse {
         this.name = name;
         this.description = description;
         this.sortOrder = sortOrder;
+        this.executionStatus = executionStatus;
         this.children = children;
     }
 
@@ -40,6 +43,7 @@ public class CaseNodeResponse {
             node.getName(),
             node.getDescription(),
             node.getSortOrder(),
+            node.getExecutionStatus(),
             children
         );
     }
@@ -66,6 +70,10 @@ public class CaseNodeResponse {
 
     public Integer getSortOrder() {
         return sortOrder;
+    }
+
+    public String getExecutionStatus() {
+        return executionStatus;
     }
 
     public List<CaseNodeResponse> getChildren() {

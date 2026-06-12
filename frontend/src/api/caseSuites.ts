@@ -1,6 +1,7 @@
 import { request, type ApiResponse } from './http';
 
 export type NodeType = 'module' | 'case' | 'step' | 'expected';
+export type ExecutionStatus = 'PENDING' | 'PASSED' | 'FAILED';
 
 export interface CaseNode {
   id: number;
@@ -9,6 +10,7 @@ export interface CaseNode {
   name: string;
   description?: string;
   sortOrder: number;
+  executionStatus?: ExecutionStatus;
   children: CaseNode[];
 }
 
@@ -54,6 +56,7 @@ export interface CaseNodePayload {
   name: string;
   description?: string;
   sortOrder: number;
+  executionStatus?: ExecutionStatus;
   children?: CaseNodePayload[];
 }
 
@@ -88,6 +91,12 @@ export function listCaseSuites(requirementId: number) {
 
 export function getCaseSuite(suiteId: number) {
   return request<CaseSuiteDetail>(`/api/case-suites/${suiteId}`);
+}
+
+export function deleteCaseSuite(suiteId: number) {
+  return request<void>(`/api/case-suites/${suiteId}`, {
+    method: 'DELETE'
+  });
 }
 
 export async function uploadCaseSuite(requirementId: number, file: File, name?: string) {

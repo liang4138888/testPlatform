@@ -8,21 +8,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.testplatform.common.exception.BusinessException;
+import com.testplatform.modules.auth.support.CurrentUserContext;
 import com.testplatform.modules.project.service.ProjectService;
 import com.testplatform.modules.requirement.dto.RequirementCreateRequest;
 import com.testplatform.modules.requirement.dto.RequirementResponse;
 import com.testplatform.modules.requirement.entity.Requirement;
 import com.testplatform.modules.requirement.mapper.RequirementMapper;
+import com.testplatform.modules.user.service.UserService;
 
 @Service
 public class RequirementService {
 
     private final RequirementMapper requirementMapper;
     private final ProjectService projectService;
+    private final UserService userService;
 
-    public RequirementService(RequirementMapper requirementMapper, ProjectService projectService) {
+    public RequirementService(RequirementMapper requirementMapper, ProjectService projectService, UserService userService) {
         this.requirementMapper = requirementMapper;
         this.projectService = projectService;
+        this.userService = userService;
     }
 
     public Requirement getRequiredRequirement(Long requirementId) {
@@ -30,14 +34,21 @@ public class RequirementService {
         if (requirement == null) {
             throw new BusinessException("REQUIREMENT_NOT_FOUND", "需求不存在");
         }
+        if (!userService.canViewAllData() && !CurrentUserContext.getUserId().equals(requirement.getCreatedBy())) {
+            projectService.getRequiredProject(requirement.getProjectId());
+        }
         return requirement;
     }
 
     public List<RequirementResponse> listRequirements(Long projectId) {
         projectService.getRequiredProject(projectId);
-        return requirementMapper.selectList(new LambdaQueryWrapper<Requirement>()
+        LambdaQueryWrapper<Requirement> query = new LambdaQueryWrapper<Requirement>()
                 .eq(Requirement::getProjectId, projectId)
-                .orderByDesc(Requirement::getUpdatedAt))
+                .orderByDesc(Requirement::getUpdatedAt);
+        if (!userService.canViewAllData()) {
+            query.eq(Requirement::getCreatedBy, CurrentUserContext.getUserId());
+        }
+        return requirementMapper.selectList(query)
             .stream()
             .map(RequirementResponse::from)
             .collect(Collectors.toList());
@@ -58,6 +69,7 @@ public class RequirementService {
         requirement.setRequirementNo(request.getRequirementNo());
         requirement.setName(request.getName());
         requirement.setDescription(request.getDescription());
+        requirement.setCreatedBy(CurrentUserContext.getUserId());
         requirementMapper.insert(requirement);
         return RequirementResponse.from(requirementMapper.selectById(requirement.getId()));
     }

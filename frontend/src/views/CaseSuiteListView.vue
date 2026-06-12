@@ -42,7 +42,7 @@
       <el-table-column label="操作" width="220" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="goToEditor(row.id)">编辑用例</el-button>
-          <el-button link type="primary" @click="goToFiles(row.id)">文件导出</el-button>
+          <el-button link type="danger" @click="removeSuite(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -52,10 +52,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { listProjects, type Project } from '../api/projects';
 import { listRequirements, type Requirement } from '../api/requirements';
-import { searchCaseSuites, type CaseSuiteListItem } from '../api/caseSuites';
+import { deleteCaseSuite, searchCaseSuites, type CaseSuiteListItem } from '../api/caseSuites';
 
 const router = useRouter();
 const projects = ref<Project[]>([]);
@@ -104,8 +104,21 @@ function goToEditor(suiteId: number) {
   router.push({ path: '/cases/edit', query: { suiteId: String(suiteId) } });
 }
 
-function goToFiles(suiteId: number) {
-  router.push({ path: '/files', query: { suiteId: String(suiteId) } });
+async function removeSuite(suite: CaseSuiteListItem) {
+  try {
+    await ElMessageBox.confirm(`确定删除用例集「${suite.name}」吗？`, '删除确认', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+    await deleteCaseSuite(suite.id);
+    ElMessage.success('用例集已删除');
+    await loadSuites();
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error(error instanceof Error ? error.message : '删除失败');
+    }
+  }
 }
 
 onMounted(async () => {

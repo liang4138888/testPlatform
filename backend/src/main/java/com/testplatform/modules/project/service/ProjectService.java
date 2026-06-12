@@ -8,22 +8,30 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.testplatform.common.exception.BusinessException;
+import com.testplatform.modules.auth.support.CurrentUserContext;
 import com.testplatform.modules.project.dto.ProjectCreateRequest;
 import com.testplatform.modules.project.dto.ProjectResponse;
 import com.testplatform.modules.project.entity.Project;
 import com.testplatform.modules.project.mapper.ProjectMapper;
+import com.testplatform.modules.user.service.UserService;
 
 @Service
 public class ProjectService {
 
     private final ProjectMapper projectMapper;
+    private final UserService userService;
 
-    public ProjectService(ProjectMapper projectMapper) {
+    public ProjectService(ProjectMapper projectMapper, UserService userService) {
         this.projectMapper = projectMapper;
+        this.userService = userService;
     }
 
     public List<ProjectResponse> listProjects() {
-        return projectMapper.selectList(new LambdaQueryWrapper<Project>().orderByDesc(Project::getUpdatedAt))
+        LambdaQueryWrapper<Project> query = new LambdaQueryWrapper<Project>().orderByDesc(Project::getUpdatedAt);
+        if (!userService.canViewAllData()) {
+            query.eq(Project::getCreatedBy, CurrentUserContext.getUserId());
+        }
+        return projectMapper.selectList(query)
             .stream()
             .map(ProjectResponse::from)
             .collect(Collectors.toList());
@@ -39,6 +47,7 @@ public class ProjectService {
         Project project = new Project();
         project.setName(request.getName());
         project.setDescription(request.getDescription());
+        project.setCreatedBy(CurrentUserContext.getUserId());
         projectMapper.insert(project);
         return ProjectResponse.from(projectMapper.selectById(project.getId()));
     }
@@ -47,6 +56,9 @@ public class ProjectService {
         Project project = projectMapper.selectById(projectId);
         if (project == null) {
             throw new BusinessException("PROJECT_NOT_FOUND", "项目不存在");
+        }
+        if (!userService.canViewAllData() && !CurrentUserContext.getUserId().equals(project.getCreatedBy())) {
+            throw new BusinessException("PERMISSION_DENIED", "无权限访问该项目");
         }
         return project;
     }

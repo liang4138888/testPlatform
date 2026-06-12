@@ -74,7 +74,7 @@
       <el-table-column label="操作" width="200">
         <template #default="{ row }">
           <el-button link type="primary" @click="goToEditor(row.id)">编辑用例</el-button>
-          <el-button link type="primary" @click="goToFiles(row.id)">文件导出</el-button>
+          <el-button link type="primary" @click="downloadSuiteFiles(row.id)">文件导出</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -87,7 +87,8 @@ import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { listProjects, type Project } from '../api/projects';
 import { createRequirement, listRequirements, type Requirement } from '../api/requirements';
-import { listCaseSuites, uploadCaseSuite, type CaseSuiteSummary } from '../api/caseSuites';
+import { listCaseSuites, uploadCaseSuite, exportCaseSuite, type CaseSuiteSummary } from '../api/caseSuites';
+import { fileDownloadUrl } from '../api/files';
 
 const router = useRouter();
 const projects = ref<Project[]>([]);
@@ -210,9 +211,14 @@ function goToEditor(suiteId: number) {
   router.push({ path: '/cases/edit', query: { suiteId: String(suiteId) } });
 }
 
-function goToFiles(suiteId: number) {
-  suitePickerVisible.value = false;
-  router.push({ path: '/files', query: { suiteId: String(suiteId) } });
+async function downloadSuiteFiles(suiteId: number) {
+  try {
+    const result = await exportCaseSuite(suiteId);
+    ElMessage.success(`导出成功：${result.fileName}`);
+    window.open(fileDownloadUrl(result.exportedFileId), '_blank');
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '导出失败');
+  }
 }
 
 async function submit() {

@@ -24,6 +24,9 @@ public class CaseNodeWriteRequest {
     @NotNull
     private Integer sortOrder;
 
+    @Size(max = 32)
+    private String executionStatus;
+
     @Valid
     private List<CaseNodeWriteRequest> children;
 
@@ -57,6 +60,14 @@ public class CaseNodeWriteRequest {
 
     public void setSortOrder(Integer sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public String getExecutionStatus() {
+        return executionStatus;
+    }
+
+    public void setExecutionStatus(String executionStatus) {
+        this.executionStatus = executionStatus;
     }
 
     public List<CaseNodeWriteRequest> getChildren() {

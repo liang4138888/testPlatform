@@ -1,4 +1,4 @@
-import type { CaseNode, CaseNodePayload, NodeType } from '../api/caseSuites';
+import type { CaseNode, CaseNodePayload, ExecutionStatus, NodeType } from '../api/caseSuites';
 
 export interface EditableNode {
   key: string;
@@ -7,6 +7,7 @@ export interface EditableNode {
   name: string;
   description?: string;
   sortOrder: number;
+  executionStatus: ExecutionStatus;
   children: EditableNode[];
 }
 
@@ -28,6 +29,7 @@ export function toEditable(node: CaseNode, index: number): EditableNode {
     name: node.name,
     description: node.description,
     sortOrder: node.sortOrder ?? index,
+    executionStatus: node.executionStatus ?? 'PENDING',
     children: (node.children ?? []).map((child, childIndex) => toEditable(child, childIndex))
   };
 }
@@ -38,6 +40,7 @@ export function toPayload(nodes: EditableNode[]): CaseNodePayload[] {
     name: node.name.trim(),
     description: node.description?.trim() || undefined,
     sortOrder: node.sortOrder ?? index,
+    executionStatus: node.executionStatus,
     children: node.children.length ? toPayload(node.children) : []
   }));
 }

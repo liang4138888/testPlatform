@@ -21,6 +21,7 @@ import com.testplatform.infrastructure.storage.LocalStorageService;
 import com.testplatform.infrastructure.xmind.XMindExporter;
 import com.testplatform.infrastructure.xmind.XMindParser;
 import com.testplatform.infrastructure.xmind.XMindTopicNode;
+import com.testplatform.modules.auth.support.CurrentUserContext;
 import com.testplatform.modules.casesuite.dto.CaseNodeResponse;
 import com.testplatform.modules.casesuite.dto.CaseNodeWriteRequest;
 import com.testplatform.modules.casesuite.dto.CaseNodesSaveRequest;
@@ -41,12 +42,16 @@ import com.testplatform.modules.file.entity.FileObject;
 import com.testplatform.modules.file.service.FileObjectService;
 import com.testplatform.modules.requirement.entity.Requirement;
 import com.testplatform.modules.requirement.service.RequirementService;
+import com.testplatform.modules.user.service.UserService;
 
 @Service
 public class CaseSuiteService {
 
     private static final Set<String> NODE_TYPES = new HashSet<String>(
         Arrays.asList("module", "case", "step", "expected")
+    );
+    private static final Set<String> EXECUTION_STATUSES = new HashSet<String>(
+        Arrays.asList("PENDING", "PASSED", "FAILED")
     );
 
     private static final String STATUS_DRAFT = "DRAFT";
@@ -62,6 +67,7 @@ public class CaseSuiteService {
     private final LocalStorageService localStorageService;
     private final XMindParser xMindParser;
     private final XMindExporter xMindExporter;
+    private final UserService userService;
 
     public CaseSuiteService(
         CaseSuiteMapper caseSuiteMapper,
@@ -73,7 +79,8 @@ public class CaseSuiteService {
         FileObjectService fileObjectService,
         LocalStorageService localStorageService,
         XMindParser xMindParser,
-        XMindExporter xMindExporter
+        XMindExporter xMindExporter,
+        UserService userService
     ) {
         this.caseSuiteMapper = caseSuiteMapper;
         this.caseNodeMapper = caseNodeMapper;
@@ -85,6 +92,7 @@ public class CaseSuiteService {
         this.localStorageService = localStorageService;
         this.xMindParser = xMindParser;
         this.xMindExporter = xMindExporter;
+        this.userService = userService;
     }
 
     public List<CaseSuiteListItemResponse> search(Long projectId, Long requirementId) {
@@ -94,9 +102,9 @@ public class CaseSuiteService {
     }
 
     public List<CaseSuiteSummaryResponse> listByRequirement(Long requirementId) {
-        requirementService.getRequiredRequirement(requirementId);
         return caseSuiteMapper.selectList(new LambdaQueryWrapper<CaseSuite>()
                 .eq(CaseSuite::getRequirementId, requirementId)
+                .eq(!userService.canViewAllData(), CaseSuite::getCreatedBy, CurrentUserContext.getUserId())
                 .orderByDesc(CaseSuite::getUpdatedAt))
             .stream()
             .map(CaseSuiteSummaryResponse::from)
@@ -108,6 +116,13 @@ public class CaseSuiteService {
         Requirement requirement = requirementService.getRequiredRequirement(suite.getRequirementId());
         List<CaseNodeResponse> nodes = buildTree(loadActiveNodes(suiteId));
         return CaseSuiteResponse.from(suite, requirement.getRequirementNo(), requirement.getName(), nodes);
+    }
+
+    @Transactional
+    public void deleteSuite(Long suiteId) {
+        getRequiredSuite(suiteId);
+        caseNodeMapper.delete(new LambdaQueryWrapper<CaseNode>().eq(CaseNode::getSuiteId, suiteId));
+        caseSuiteMapper.deleteById(suiteId);
     }
 
     public List<FileObjectResponse> listSuiteFiles(Long suiteId) {
@@ -151,6 +166,7 @@ public class CaseSuiteService {
         suite.setName(resolvedName);
         suite.setOriginalFileId(originalFile.getId());
         suite.setStatus(STATUS_DRAFT);
+        suite.setCreatedBy(CurrentUserContext.getUserId());
         caseSuiteMapper.insert(suite);
 
         persistParsedNodes(suite.getId(), null, parsedNodes, 0);
@@ -200,6 +216,9 @@ public class CaseSuiteService {
         if (suite == null) {
             throw new BusinessException("CASE_SUITE_NOT_FOUND", "用例集不存在");
         }
+        if (!userService.canViewAllData() && !CurrentUserContext.getUserId().equals(suite.getCreatedBy())) {
+            throw new BusinessException("PERMISSION_DENIED", "无权限访问该用例集");
+        }
         return suite;
     }
 
@@ -208,12 +227,14 @@ public class CaseSuiteService {
             requirementService.getRequiredRequirement(requirementId);
             return caseSuiteMapper.selectList(new LambdaQueryWrapper<CaseSuite>()
                 .eq(CaseSuite::getRequirementId, requirementId)
+                .eq(!userService.canViewAllData(), CaseSuite::getCreatedBy, CurrentUserContext.getUserId())
                 .orderByDesc(CaseSuite::getUpdatedAt));
         }
         if (projectId != null) {
             projectService.getRequiredProject(projectId);
             List<Requirement> requirements = requirementMapper.selectList(new LambdaQueryWrapper<Requirement>()
-                .eq(Requirement::getProjectId, projectId));
+                .eq(Requirement::getProjectId, projectId)
+                .eq(!userService.canViewAllData(), Requirement::getCreatedBy, CurrentUserContext.getUserId()));
             if (requirements.isEmpty()) {
                 return Collections.emptyList();
             }
@@ -222,9 +243,12 @@ public class CaseSuiteService {
                 .collect(Collectors.toList());
             return caseSuiteMapper.selectList(new LambdaQueryWrapper<CaseSuite>()
                 .in(CaseSuite::getRequirementId, requirementIds)
+                .eq(!userService.canViewAllData(), CaseSuite::getCreatedBy, CurrentUserContext.getUserId())
                 .orderByDesc(CaseSuite::getUpdatedAt));
         }
-        return caseSuiteMapper.selectList(new LambdaQueryWrapper<CaseSuite>().orderByDesc(CaseSuite::getUpdatedAt));
+        return caseSuiteMapper.selectList(new LambdaQueryWrapper<CaseSuite>()
+            .eq(!userService.canViewAllData(), CaseSuite::getCreatedBy, CurrentUserContext.getUserId())
+            .orderByDesc(CaseSuite::getUpdatedAt));
     }
 
     private CaseSuiteListItemResponse toListItem(CaseSuite suite) {
@@ -275,6 +299,7 @@ public class CaseSuiteService {
             entity.setName(node.getName());
             entity.setDescription(node.getDescription());
             entity.setSortOrder(order++);
+            entity.setExecutionStatus("PENDING");
             caseNodeMapper.insert(entity);
             if (!node.getChildren().isEmpty()) {
                 persistParsedNodes(suiteId, entity.getId(), node.getChildren(), 0);
@@ -295,6 +320,7 @@ public class CaseSuiteService {
             entity.setName(node.getName().trim());
             entity.setDescription(node.getDescription());
             entity.setSortOrder(node.getSortOrder() == null ? order : node.getSortOrder());
+            entity.setExecutionStatus(resolveExecutionStatus(node));
             caseNodeMapper.insert(entity);
             order++;
             persistWriteNodes(suiteId, entity.getId(), node.getChildren());
@@ -345,11 +371,21 @@ public class CaseSuiteService {
         if (node.getName() == null || node.getName().trim().isEmpty()) {
             throw new BusinessException("INVALID_NODE_NAME", "节点名称不能为空");
         }
+        if (node.getExecutionStatus() != null && !EXECUTION_STATUSES.contains(node.getExecutionStatus())) {
+            throw new BusinessException("INVALID_EXECUTION_STATUS", "无效的执行状态: " + node.getExecutionStatus());
+        }
         if (node.getChildren() != null) {
             for (CaseNodeWriteRequest child : node.getChildren()) {
                 validateWriteNode(child);
             }
         }
+    }
+
+    private String resolveExecutionStatus(CaseNodeWriteRequest node) {
+        if (node.getExecutionStatus() == null || node.getExecutionStatus().trim().isEmpty()) {
+            return "PENDING";
+        }
+        return node.getExecutionStatus();
     }
 
     private String resolveSuiteName(String suiteName, String originalFilename) {

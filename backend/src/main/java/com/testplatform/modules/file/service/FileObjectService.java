@@ -13,6 +13,7 @@ public class FileObjectService {
 
     public static final String KIND_ORIGINAL = "ORIGINAL";
     public static final String KIND_EXPORTED = "EXPORTED";
+    public static final String KIND_BUG_IMAGE = "BUG_IMAGE";
 
     private final FileObjectMapper fileObjectMapper;
 

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>需求交付流程图</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #5d6678;
+      --border: #dfe3ea;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .diagram {
+      overflow: auto;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .mermaid {
+      min-width: 720px;
+    }
+
+    .rules {
+      margin-top: 20px;
+      padding: 20px 24px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .rules h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .rules ol {
+      margin: 0;
+      padding-left: 22px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>需求交付流程图</h1>
+    <p>根据实际交付流程整理：主流程由角色任务的完成情况驱动，开发、测试、验收等阶段支持多人并行和完成汇聚。</p>
+    <section class="diagram">
+      <pre class="mermaid">
+%%{init: {"flowchart": {"rankSpacing": 42, "nodeSpacing": 24, "padding": 14, "curve": "basis"}} }%%
+flowchart TB
+
+  start([开始])
+  collect[需求采集]
+  preReview[需求预评审]
+  detailReview[需求详细评审]
+  assign[需求分配]
+  devGate{所有开发任务完成?}
+  testStart[进入测试]
+  testGate{所有测试任务完成?}
+  uiAccept[UI验收]
+  productAccept[产品验收]
+  done([完成])
+
+  start --> collect --> preReview --> detailReview --> assign --> devPool
+  devPool --> devGate
+  devGate -- 否 --> devPool
+  devGate -- 是 --> testStart
+  testStart --> tester
+  tester --> testGate
+  testGate -- 否 --> tester
+  testGate -- 是 --> uiAccept --> productAccept --> done
+
+  subgraph devPool[开发任务池]
+    direction TB
+
+    subgraph backend[服务端开发任务]
+      direction TB
+      beTask1[服务端开发 A]
+      beTask2[服务端开发 B]
+      beTaskN[服务端开发 N]
+
+      subgraph beFlow[服务端状态流]
+        direction TB
+        beSchedule[待排期] --> beTodo[待开发] --> beDoing[开发中] --> beJoint[联调中] --> beDone[开发完成]
+      end
+
+      beTask1 --> beFlow
+      beTask2 --> beFlow
+      beTaskN --> beFlow
+    end
+
+    subgraph frontend[前端开发任务]
+      direction TB
+
+      subgraph ios[iOS]
+        direction TB
+        iosSchedule[待排期] --> iosTodo[待开发] --> iosDoing[开发中] --> iosJoint[联调中] --> iosDone[开发完成]
+      end
+
+      subgraph android[安卓]
+        direction TB
+        androidSchedule[待排期] --> androidTodo[待开发] --> androidDoing[开发中] --> androidJoint[联调中] --> androidDone[开发完成]
+      end
+
+      subgraph miniProgram[小程序]
+        direction TB
+        mpSchedule[待排期] --> mpTodo[待开发] --> mpDoing[开发中] --> mpJoint[联调中] --> mpDone[开发完成]
+      end
+
+      subgraph harmony[鸿蒙]
+        direction TB
+        hmSchedule[待排期] --> hmTodo[待开发] --> hmDoing[开发中] --> hmJoint[联调中] --> hmDone[开发完成]
+      end
+
+      subgraph web[Web]
+        direction TB
+        webSchedule[待排期] --> webTodo[待开发] --> webDoing[开发中] --> webJoint[联调中] --> webDone[开发完成]
+      end
+    end
+  end
+
+  subgraph tester[测试任务]
+    direction TB
+    testSchedule[待排期] --> testTodo[待测试] --> testDoing[测试中] --> testDone[测试完成]
+  end
+      </pre>
+    </section>
+    <section class="rules">
+      <h2>流转规则</h2>
+      <ol>
+        <li>需求分配后，需求进入开发任务池，并按参与角色或人员生成独立开发任务。</li>
+        <li>同一角色可以存在多个任务，例如多个服务端开发并行处理不同模块。</li>
+        <li>不同角色任务并行推进，例如服务端、iOS、安卓、小程序、鸿蒙、Web 可以同步开发。</li>
+        <li>开发任务池内所有开发任务均为“开发完成”后，需求主流程才能进入测试。</li>
+        <li>测试、UI验收、产品验收也可以按角色或人员拆分任务，并通过“全部完成”规则控制主流程流转。</li>
+      </ol>
+    </section>
+  </main>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+    mermaid.initialize({
+      startOnLoad: true,
+      securityLevel: "loose",
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#eef5ff",
+        primaryTextColor: "#172033",
+        primaryBorderColor: "#5b8def",
+        lineColor: "#7b8496",
+        secondaryColor: "#f4fbf7",
+        tertiaryColor: "#fff8e8",
+        fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+      }
+    });
+  </script>
+</body>
+</html>

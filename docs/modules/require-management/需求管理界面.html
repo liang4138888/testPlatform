@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>需求管理</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fa;
+      --surface: #ffffff;
+      --surface-soft: #f9fafc;
+      --line: #dde3ec;
+      --line-strong: #c8d1df;
+      --text: #172033;
+      --muted: #647086;
+      --blue: #2563eb;
+      --blue-soft: #eaf1ff;
+      --green: #16835f;
+      --green-soft: #e8f6f0;
+      --amber: #b4690e;
+      --amber-soft: #fff4df;
+      --red: #bf2f45;
+      --red-soft: #fff0f2;
+      --shadow: 0 10px 30px rgba(23, 32, 51, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 220px minmax(460px, 1fr) 390px;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      padding: 20px 16px;
+      border-right: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .brand-icon,
+    .status-dot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .main-nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .menu-item,
+    .status-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 38px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+    }
+
+    .menu-item {
+      color: var(--text);
+      background: var(--blue-soft);
+      font-weight: 700;
+    }
+
+    .status-item.active {
+      color: var(--text);
+      background: var(--blue-soft);
+      font-weight: 700;
+    }
+
+    .status-label {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 8px;
+    }
+
+    .status-label span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .status-filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding-bottom: 4px;
+      overflow-x: auto;
+    }
+
+    .status-filters .status-item {
+      flex: 0 0 auto;
+      min-height: 34px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .status-filters .status-item.active {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .count {
+      min-width: 24px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: #edf1f7;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 22px 22px 28px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .search {
+      position: relative;
+      width: 260px;
+    }
+
+    .search svg {
+      position: absolute;
+      top: 50%;
+      left: 11px;
+      width: 17px;
+      height: 17px;
+      transform: translateY(-50%);
+      color: var(--muted);
+    }
+
+    .search input {
+      width: 100%;
+      height: 38px;
+      padding: 0 12px 0 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      outline: 0;
+    }
+
+    .primary-btn,
+    .ghost-btn,
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 38px;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+
+    .primary-btn {
+      padding: 0 14px;
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .ghost-btn {
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .icon-btn {
+      width: 38px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--muted);
+    }
+
+    .board {
+      display: grid;
+      gap: 12px;
+    }
+
+    .requirement-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 1px 0 rgba(23, 32, 51, 0.03);
+      text-align: left;
+    }
+
+    .requirement-card.active {
+      border-color: var(--blue);
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      margin: 0 0 8px;
+      font-size: 16px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    .card-desc {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .card-foot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #eef2f7;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge.blue {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .badge.green {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .badge.amber {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .badge.red {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .side-panel {
+      min-width: 0;
+      padding: 22px 18px;
+      border-left: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .panel {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .panel + .panel {
+      margin-top: 14px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(23, 32, 51, 0.38);
+    }
+
+    .modal[hidden] {
+      display: none;
+    }
+
+    .modal-card {
+      width: min(520px, 100%);
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    h2,
+    h3 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    h3 {
+      font-size: 14px;
+    }
+
+    .detail-desc {
+      margin: 8px 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 4px;
+      margin: 16px 0 2px;
+    }
+
+    .flow-step {
+      position: relative;
+      min-height: 34px;
+      padding: 7px 5px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .flow-step.done {
+      border-color: #9fd8c3;
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .flow-step.current {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .form-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      outline: 0;
+    }
+
+    .field input,
+    .field select {
+      height: 38px;
+      padding: 0 10px;
+    }
+
+    .field textarea {
+      min-height: 78px;
+      resize: vertical;
+      padding: 10px;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .task {
+      display: grid;
+      grid-template-columns: 20px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-soft);
+    }
+
+    .task input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--blue);
+    }
+
+    .task-name {
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .task-role {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .transition {
+      display: grid;
+      gap: 10px;
+    }
+
+    .transition-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .blocker {
+      min-height: 36px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .blocker.warning {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .empty {
+      padding: 28px 18px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
+
+    @media (max-width: 1180px) {
+      .app {
+        grid-template-columns: 180px minmax(420px, 1fr);
+      }
+
+      .side-panel {
+        grid-column: 1 / -1;
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        display: block;
+      }
+
+      .sidebar,
+      .side-panel {
+        border: 0;
+      }
+
+      .toolbar {
+        display: grid;
+      }
+
+      .toolbar-actions,
+      .search {
+        width: 100%;
+      }
+
+      .flow {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .requirement-card {
+        grid-template-columns: 1fr;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-icon" data-icon="workflow"></span>
+        <span>需求管理</span>
+      </div>
+      <nav class="main-nav">
+        <button class="menu-item" type="button">
+          <span class="status-label">
+            <span class="status-dot" data-icon="clipboard-list"></span>
+            <span>需求管理</span>
+          </span>
+        </button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="toolbar">
+        <div>
+          <h1>需求看板</h1>
+          <div class="meta" id="boardMeta"></div>
+        </div>
+        <div class="toolbar-actions">
+          <label class="search">
+            <span data-icon="search"></span>
+            <input id="searchInput" type="search" placeholder="搜索需求">
+          </label>
+          <button class="primary-btn" id="createBtn" type="button">
+            <span data-icon="plus"></span>
+            <span>新建需求</span>
+          </button>
+        </div>
+      </header>
+      <nav class="status-filters" id="statusFilters"></nav>
+      <section class="board" id="requirementList"></section>
+    </main>
+
+    <aside class="side-panel">
+      <section class="panel" id="detailPanel"></section>
+      <section class="panel" id="taskPanel"></section>
+      <section class="panel" id="transitionPanel"></section>
+    </aside>
+  </div>
+
+  <section class="modal" id="createPanel" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="createTitle">
+      <div class="panel-head">
+        <h2 id="createTitle">新建需求</h2>
+        <button class="icon-btn" id="closeCreateBtn" type="button" title="关闭">
+          <span data-icon="x"></span>
+        </button>
+      </div>
+      <form class="form-grid" id="createForm">
+        <div class="form-note">
+          <span data-icon="info"></span>
+          <span>新建后自动进入“需求采集”状态</span>
+        </div>
+        <div class="field">
+          <label for="titleInput">需求名称</label>
+          <input id="titleInput" name="title" required maxlength="36" placeholder="例如：促销活动配置支持多端生效">
+        </div>
+        <div class="field">
+          <label for="ownerInput">提出人</label>
+          <input id="ownerInput" name="owner" required maxlength="16" placeholder="填写需求提出人">
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="proposedDateInput">提出时间</label>
+            <input id="proposedDateInput" name="proposedDate" type="date" required>
+          </div>
+          <div class="field">
+            <label for="proposedIterationInput">提出迭代</label>
+            <input id="proposedIterationInput" name="proposedIteration" required maxlength="20" placeholder="例如：2026-W23">
+          </div>
+        </div>
+        <div class="field">
+          <label for="releaseIterationInput">计划上线迭代</label>
+          <input id="releaseIterationInput" name="releaseIteration" required maxlength="20" placeholder="例如：2026-W25">
+        </div>
+        <div class="field">
+          <label for="priorityInput">优先级</label>
+          <select id="priorityInput" name="priority">
+            <option value="P1">P1 高</option>
+            <option value="P2" selected>P2 中</option>
+            <option value="P3">P3 低</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="descInput">需求说明</label>
+          <textarea id="descInput" name="desc" maxlength="120" placeholder="简单描述目标、范围或业务背景"></textarea>
+        </div>
+        <button class="primary-btn" type="submit">
+          <span data-icon="check"></span>
+          <span>保存</span>
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    const statuses = [
+      "需求采集",
+      "需求预评审",
+      "需求详细评审",
+      "需求分配",
+      "需求开发",
+      "需求测试",
+      "UI验收",
+      "产品验收",
+      "完成"
+    ];
+
+    const state = {
+      activeStatus: "全部",
+      selectedId: "REQ-1024",
+      query: "",
+      requirements: [
+        {
+          id: "REQ-1024",
+          title: "促销活动配置支持多端生效",
+          desc: "活动配置后同步影响 App、小程序、Web 管理端展示与交易校验。",
+          owner: "李产品",
+          proposedDate: "2026-06-03",
+          proposedIteration: "2026-W23",
+          releaseIteration: "2026-W25",
+          priority: "P1",
+          status: "需求开发",
+          devTasks: [
+            { id: "d1", role: "服务端", name: "活动规则接口", done: true },
+            { id: "d2", role: "服务端", name: "库存与价格校验", done: false },
+            { id: "d3", role: "iOS", name: "活动标签展示", done: true },
+            { id: "d4", role: "安卓", name: "活动标签展示", done: false },
+            { id: "d5", role: "小程序", name: "活动入口适配", done: true }
+          ],
+          testTasks: [
+            { id: "t1", role: "测试", name: "活动创建链路", done: false },
+            { id: "t2", role: "测试", name: "多端展示校验", done: false }
+          ],
+          uiTasks: [{ id: "u1", role: "UI", name: "多端视觉验收", done: false }],
+          productTasks: [{ id: "p1", role: "产品", name: "业务验收", done: false }]
+        },
+        {
+          id: "REQ-1025",
+          title: "需求评审记录归档",
+          desc: "评审结论、风险项、待确认项按照需求维度统一留痕。",
+          owner: "周产品",
+          proposedDate: "2026-06-01",
+          proposedIteration: "2026-W23",
+          releaseIteration: "2026-W24",
+          priority: "P2",
+          status: "需求详细评审",
+          devTasks: [],
+          testTasks: [],
+          uiTasks: [],
+          productTasks: []
+        },
+        {
+          id: "REQ-1026",
+          title: "门店商品状态看板",
+          desc: "按门店、业态、SKU 状态聚合展示商品上下架与库存风险。",
+          owner: "王产品",
+          proposedDate: "2026-05-28",
+          proposedIteration: "2026-W22",
+          releaseIteration: "2026-W24",
+          priority: "P2",
+          status: "需求测试",
+          devTasks: [
+            { id: "d1", role: "服务端", name: "商品状态聚合接口", done: true },
+            { id: "d2", role: "Web", name: "看板筛选与列表", done: true }
+          ],
+          testTasks: [
+            { id: "t1", role: "测试", name: "筛选条件组合", done: true },
+            { id: "t2", role: "测试", name: "异常数据展示", done: false }
+          ],
+          uiTasks: [{ id: "u1", role: "UI", name: "看板视觉验收", done: false }],
+          productTasks: [{ id: "p1", role: "产品", name: "看板口径验收", done: false }]
+        },
+        {
+          id: "REQ-1027",
+          title: "消息通知模板管理",
+          desc: "支持按业务类型维护通知模板，并记录发布人与发布时间。",
+          owner: "赵产品",
+          proposedDate: "2026-05-20",
+          proposedIteration: "2026-W21",
+          releaseIteration: "2026-W23",
+          priority: "P3",
+          status: "产品验收",
+          devTasks: [{ id: "d1", role: "服务端", name: "模板发布接口", done: true }],
+          testTasks: [{ id: "t1", role: "测试", name: "模板发布回归", done: true }],
+          uiTasks: [{ id: "u1", role: "UI", name: "模板页验收", done: true }],
+          productTasks: [{ id: "p1", role: "产品", name: "通知内容验收", done: false }]
+        }
+      ]
+    };
+
+    const els = {
+      statusFilters: document.getElementById("statusFilters"),
+      boardMeta: document.getElementById("boardMeta"),
+      requirementList: document.getElementById("requirementList"),
+      detailPanel: document.getElementById("detailPanel"),
+      taskPanel: document.getElementById("taskPanel"),
+      transitionPanel: document.getElementById("transitionPanel"),
+      searchInput: document.getElementById("searchInput"),
+      createBtn: document.getElementById("createBtn"),
+      createPanel: document.getElementById("createPanel"),
+      closeCreateBtn: document.getElementById("closeCreateBtn"),
+      createForm: document.getElementById("createForm")
+    };
+
+    function selectedRequirement() {
+      return state.requirements.find((item) => item.id === state.selectedId) || state.requirements[0];
+    }
+
+    function nextStatus(status) {
+      const index = statuses.indexOf(status);
+      return index >= 0 && index < statuses.length - 1 ? statuses[index + 1] : null;
+    }
+
+    function previousStatus(status) {
+      const index = statuses.indexOf(status);
+      return index > 0 ? statuses[index - 1] : null;
+    }
+
+    function tasksForStatus(req) {
+      if (req.status === "需求开发") return req.devTasks;
+      if (req.status === "需求测试") return req.testTasks;
+      if (req.status === "UI验收") return req.uiTasks;
+      if (req.status === "产品验收") return req.productTasks;
+      return [];
+    }
+
+    function gateStatus(req) {
+      const tasks = tasksForStatus(req);
+      if (!["需求开发", "需求测试", "UI验收", "产品验收"].includes(req.status)) {
+        return { pass: true, text: "可进入下一状态" };
+      }
+      const doneCount = tasks.filter((task) => task.done).length;
+      const pass = tasks.length > 0 && doneCount === tasks.length;
+      return {
+        pass,
+        text: pass ? "当前阶段任务已全部完成" : `${doneCount}/${tasks.length} 个任务完成`
+      };
+    }
+
+    function ensureTasks(req) {
+      if (req.status === "需求开发" && req.devTasks.length === 0) {
+        req.devTasks = [
+          { id: crypto.randomUUID(), role: "服务端", name: "服务端开发任务", done: false },
+          { id: crypto.randomUUID(), role: "前端", name: "前端开发任务", done: false }
+        ];
+      }
+      if (req.status === "需求测试" && req.testTasks.length === 0) {
+        req.testTasks = [{ id: crypto.randomUUID(), role: "测试", name: "测试任务", done: false }];
+      }
+      if (req.status === "UI验收" && req.uiTasks.length === 0) {
+        req.uiTasks = [{ id: crypto.randomUUID(), role: "UI", name: "UI验收任务", done: false }];
+      }
+      if (req.status === "产品验收" && req.productTasks.length === 0) {
+        req.productTasks = [{ id: crypto.randomUUID(), role: "产品", name: "产品验收任务", done: false }];
+      }
+    }
+
+    function filteredRequirements() {
+      const query = state.query.trim().toLowerCase();
+      return state.requirements.filter((req) => {
+        const statusMatch = state.activeStatus === "全部" || req.status === state.activeStatus;
+        const queryMatch = !query || `${req.id} ${req.title} ${req.owner}`.toLowerCase().includes(query);
+        return statusMatch && queryMatch;
+      });
+    }
+
+    function badgeClass(req) {
+      if (req.status === "完成") return "green";
+      if (["需求开发", "需求测试"].includes(req.status)) return "blue";
+      if (["UI验收", "产品验收"].includes(req.status)) return "amber";
+      return "";
+    }
+
+    function renderIcons() {
+      if (window.lucide) {
+        lucide.createIcons({
+          attrs: { width: 18, height: 18, strokeWidth: 2 }
+        });
+      }
+    }
+
+    function renderStatusFilters() {
+      const entries = ["全部", ...statuses];
+      els.statusFilters.innerHTML = entries.map((status) => {
+        const count = status === "全部"
+          ? state.requirements.length
+          : state.requirements.filter((req) => req.status === status).length;
+        const active = state.activeStatus === status ? " active" : "";
+        return `
+          <button class="status-item${active}" type="button" data-status="${status}">
+            <span class="status-label">
+              <span class="status-dot" data-icon="${status === "完成" ? "circle-check" : "circle"}"></span>
+              <span>${status}</span>
+            </span>
+            <span class="count">${count}</span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderList() {
+      const list = filteredRequirements();
+      els.boardMeta.textContent = `${list.length} 个需求`;
+      if (list.length === 0) {
+        els.requirementList.innerHTML = `<div class="empty">暂无匹配需求</div>`;
+        return;
+      }
+      els.requirementList.innerHTML = list.map((req) => {
+        const active = req.id === state.selectedId ? " active" : "";
+        const gate = gateStatus(req);
+        const blockerClass = gate.pass ? "green" : req.status === "完成" ? "green" : "amber";
+        return `
+          <button class="requirement-card${active}" type="button" data-id="${req.id}">
+            <span>
+              <h2 class="card-title">${req.title}</h2>
+              <p class="card-desc">${req.desc}</p>
+              <span class="card-foot">
+                <span class="badge blue">${req.id}</span>
+                <span class="badge">${req.owner}</span>
+                <span class="badge">${req.proposedIteration || "-"}</span>
+                <span class="badge">上线 ${req.releaseIteration || "-"}</span>
+                <span class="badge ${badgeClass(req)}">${req.status}</span>
+                <span class="badge ${blockerClass}">${req.status === "完成" ? "已完成" : gate.text}</span>
+              </span>
+            </span>
+            <span class="badge ${req.priority === "P1" ? "red" : req.priority === "P2" ? "amber" : ""}">${req.priority}</span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderDetail(req) {
+      const index = statuses.indexOf(req.status);
+      els.detailPanel.innerHTML = `
+        <div class="panel-head">
+          <h2>${req.title}</h2>
+          <span class="badge ${badgeClass(req)}">${req.status}</span>
+        </div>
+        <p class="detail-desc">${req.desc}</p>
+        <div class="card-foot">
+          <span class="badge blue">${req.id}</span>
+          <span class="badge">${req.owner}</span>
+          <span class="badge">提出 ${req.proposedDate || "-"}</span>
+          <span class="badge">提出迭代 ${req.proposedIteration || "-"}</span>
+          <span class="badge">上线迭代 ${req.releaseIteration || "-"}</span>
+          <span class="badge ${req.priority === "P1" ? "red" : req.priority === "P2" ? "amber" : ""}">${req.priority}</span>
+        </div>
+        <div class="flow">
+          ${statuses.map((status, stepIndex) => `
+            <div class="flow-step ${stepIndex < index ? "done" : ""} ${stepIndex === index ? "current" : ""}">
+              ${status}
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderTasks(req) {
+      const tasks = tasksForStatus(req);
+      const title = req.status === "需求开发" ? "开发任务池"
+        : req.status === "需求测试" ? "测试任务池"
+        : req.status === "UI验收" ? "UI验收任务"
+        : req.status === "产品验收" ? "产品验收任务"
+        : "阶段任务";
+
+      if (tasks.length === 0) {
+        els.taskPanel.innerHTML = `
+          <div class="panel-head">
+            <h2>${title}</h2>
+          </div>
+          <div class="empty">当前状态无任务门禁</div>
+        `;
+        return;
+      }
+
+      els.taskPanel.innerHTML = `
+        <div class="panel-head">
+          <h2>${title}</h2>
+          <span class="badge">${tasks.filter((task) => task.done).length}/${tasks.length}</span>
+        </div>
+        <div class="task-list">
+          ${tasks.map((task) => `
+            <label class="task">
+              <input type="checkbox" data-task-id="${task.id}" ${task.done ? "checked" : ""}>
+              <span>
+                <span class="task-name">${task.name}</span>
+                <span class="task-role">${task.role}</span>
+              </span>
+              <span class="badge ${task.done ? "green" : "amber"}">${task.done ? "完成" : "进行中"}</span>
+            </label>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderTransition(req) {
+      const prev = previousStatus(req.status);
+      const next = nextStatus(req.status);
+      const gate = gateStatus(req);
+      const blocked = next && !gate.pass;
+      els.transitionPanel.innerHTML = `
+        <div class="panel-head">
+          <h2>状态流转</h2>
+        </div>
+        <div class="transition">
+          <div class="blocker ${blocked ? "warning" : ""}">
+            ${req.status === "完成" ? "流程已完成" : gate.text}
+          </div>
+          <div class="transition-row">
+            <button class="ghost-btn" id="prevBtn" type="button" ${prev ? "" : "disabled"}>
+              <span data-icon="arrow-left"></span>
+              <span>${prev || "上一状态"}</span>
+            </button>
+            <button class="primary-btn" id="nextBtn" type="button" ${next && gate.pass ? "" : "disabled"}>
+              <span>${next || "完成"}</span>
+              <span data-icon="arrow-right"></span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function render() {
+      const req = selectedRequirement();
+      if (req) ensureTasks(req);
+      renderStatusFilters();
+      renderList();
+      if (req) {
+        renderDetail(req);
+        renderTasks(req);
+        renderTransition(req);
+      }
+      renderIcons();
+    }
+
+    function openCreateModal() {
+      els.createPanel.hidden = false;
+      renderIcons();
+      document.getElementById("proposedDateInput").valueAsDate = new Date();
+      document.getElementById("titleInput").focus();
+    }
+
+    function closeCreateModal() {
+      els.createPanel.hidden = true;
+    }
+
+    els.statusFilters.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-status]");
+      if (!button) return;
+      state.activeStatus = button.dataset.status;
+      const first = filteredRequirements()[0];
+      if (first) state.selectedId = first.id;
+      render();
+    });
+
+    els.requirementList.addEventListener("click", (event) => {
+      const card = event.target.closest("[data-id]");
+      if (!card) return;
+      state.selectedId = card.dataset.id;
+      render();
+    });
+
+    els.searchInput.addEventListener("input", (event) => {
+      state.query = event.target.value;
+      const first = filteredRequirements()[0];
+      if (first) state.selectedId = first.id;
+      render();
+    });
+
+    els.taskPanel.addEventListener("change", (event) => {
+      const checkbox = event.target.closest("[data-task-id]");
+      if (!checkbox) return;
+      const req = selectedRequirement();
+      const task = tasksForStatus(req).find((item) => item.id === checkbox.dataset.taskId);
+      if (task) task.done = checkbox.checked;
+      render();
+    });
+
+    els.transitionPanel.addEventListener("click", (event) => {
+      const req = selectedRequirement();
+      if (event.target.closest("#prevBtn")) {
+        const prev = previousStatus(req.status);
+        if (prev) req.status = prev;
+      }
+      if (event.target.closest("#nextBtn")) {
+        const next = nextStatus(req.status);
+        if (next && gateStatus(req).pass) req.status = next;
+      }
+      ensureTasks(req);
+      render();
+    });
+
+    els.createBtn.addEventListener("click", () => {
+      openCreateModal();
+    });
+
+    els.closeCreateBtn.addEventListener("click", () => {
+      closeCreateModal();
+    });
+
+    els.createPanel.addEventListener("click", (event) => {
+      if (event.target === els.createPanel) closeCreateModal();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !els.createPanel.hidden) closeCreateModal();
+    });
+
+    els.createForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = new FormData(els.createForm);
+      const id = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
+      state.requirements.unshift({
+        id,
+        title: data.get("title").trim(),
+        desc: data.get("desc").trim() || "未填写说明",
+        owner: data.get("owner").trim(),
+        proposedDate: data.get("proposedDate"),
+        proposedIteration: data.get("proposedIteration").trim(),
+        releaseIteration: data.get("releaseIteration").trim(),
+        priority: data.get("priority"),
+        status: "需求采集",
+        devTasks: [],
+        testTasks: [],
+        uiTasks: [],
+        productTasks: []
+      });
+      state.selectedId = id;
+      state.activeStatus = "全部";
+      els.createForm.reset();
+      closeCreateModal();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
