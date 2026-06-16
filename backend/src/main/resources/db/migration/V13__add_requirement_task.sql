@@ -1,0 +1,20 @@
+CREATE TABLE requirement_task (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    requirement_id BIGINT NOT NULL,
+    task_type VARCHAR(20) NOT NULL,
+    role_type VARCHAR(30) NULL,
+    name VARCHAR(150) NOT NULL,
+    assignee_id BIGINT NOT NULL,
+    assignee_name VARCHAR(100) NULL,
+    status VARCHAR(30) NOT NULL,
+    remark VARCHAR(500) NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME NOT NULL,
+    created_by BIGINT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    KEY idx_requirement_task_type (requirement_id, task_type, deleted),
+    KEY idx_requirement_task_assignee (requirement_id, assignee_id, task_type, deleted)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

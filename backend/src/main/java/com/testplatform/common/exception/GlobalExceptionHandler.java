@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,11 +22,11 @@ public class GlobalExceptionHandler {
     private static final Logger log = LogManager.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(BusinessException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleBusinessException(BusinessException exception, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException exception, HttpServletRequest request) {
         log.warn("business exception | method={} | path={} | code={} | message={}",
             request.getMethod(), request.getRequestURI(), exception.getCode(), exception.getMessage());
-        return ApiResponse.fail(exception.getCode(), exception.getMessage());
+        HttpStatus status = "UNAUTHORIZED".equals(exception.getCode()) ? HttpStatus.UNAUTHORIZED : HttpStatus.BAD_REQUEST;
+        return ResponseEntity.status(status).body(ApiResponse.fail(exception.getCode(), exception.getMessage()));
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})

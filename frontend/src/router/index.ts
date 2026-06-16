@@ -74,7 +74,7 @@ const router = createRouter({
       component: RequirementView,
       meta: {
         title: '需求管理',
-        description: '按项目维护需求，并进入 XMind 用例上传和编辑流程。',
+        description: '按交付阶段跟踪需求看板、任务池、流转门禁和用例入口。',
         permission: 'MENU_REQUIREMENT'
       }
     },
