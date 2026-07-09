@@ -3,7 +3,7 @@
     <article class="panel">
       <div class="panel-title">
         <h2>项目列表</h2>
-        <el-button type="primary" @click="openCreateDialog">新建项目</el-button>
+        <el-button v-if="canCreateProject" type="primary" @click="openCreateDialog">新建项目</el-button>
       </div>
 
       <el-table v-loading="loading" :data="projects" empty-text="暂无项目">
@@ -17,7 +17,7 @@
       <h2>页面说明</h2>
       <p class="muted">项目是需求和用例集的上层归属。创建项目后，可到需求管理页面为该项目创建需求。</p>
       <el-alert
-        title="一期暂不做权限，所有项目对进入平台的用户可见。"
+        title="项目数据按角色数据权限展示，操作按钮按按钮权限展示。"
         type="info"
         :closable="false"
         show-icon
@@ -42,9 +42,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { createProject, listProjects, type Project } from '../api/projects';
+import { showErrorMessage } from '../api/http';
+import { hasPermission } from '../utils/permissions';
 
 const projects = ref<Project[]>([]);
 const loading = ref(false);
@@ -54,19 +56,24 @@ const form = reactive({
   name: '',
   description: ''
 });
+const canCreateProject = computed(() => hasPermission('PROJECT_CREATE'));
 
 async function loadProjects() {
   loading.value = true;
   try {
     projects.value = await listProjects();
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '项目加载失败');
+    showErrorMessage(error, '项目加载失败');
   } finally {
     loading.value = false;
   }
 }
 
 function openCreateDialog() {
+  if (!canCreateProject.value) {
+    ElMessage.warning('没有新建项目权限');
+    return;
+  }
   form.name = '';
   form.description = '';
   dialogVisible.value = true;
@@ -88,7 +95,7 @@ async function submit() {
     dialogVisible.value = false;
     await loadProjects();
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '项目创建失败');
+    showErrorMessage(error, '项目创建失败');
   } finally {
     saving.value = false;
   }

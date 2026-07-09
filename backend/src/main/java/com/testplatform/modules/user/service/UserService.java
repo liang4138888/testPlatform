@@ -15,6 +15,7 @@ import com.testplatform.modules.auth.support.CurrentUserContext;
 import com.testplatform.modules.user.dto.AssignableUserResponse;
 import com.testplatform.modules.user.dto.CurrentUserResponse;
 import com.testplatform.modules.user.dto.UserCreateRequest;
+import com.testplatform.modules.user.dto.UserUpdateRequest;
 import com.testplatform.modules.user.entity.SystemPermission;
 import com.testplatform.modules.user.entity.SystemRole;
 import com.testplatform.modules.user.entity.SystemRolePermission;
@@ -67,6 +68,7 @@ public class UserService {
         response.setUsername(user.getUsername());
         response.setDisplayName(user.getDisplayName());
         response.setAvatar(user.getAvatar());
+        response.setOrganizationId(user.getOrganizationId());
         List<SystemRole> roles = getUserRoles(user.getId());
         if (roles.isEmpty() && "admin".equals(user.getUsername())) {
             roles = systemRoleMapper.selectList(new LambdaQueryWrapper<SystemRole>().eq(SystemRole::getRoleCode, ROLE_ADMIN));
@@ -81,6 +83,11 @@ public class UserService {
 
     @Transactional
     public AssignableUserResponse createUser(UserCreateRequest request) {
+        requirePermission("USER_MANAGE");
+        return createUserInternal(request);
+    }
+
+    private AssignableUserResponse createUserInternal(UserCreateRequest request) {
         if (request.getUsername() == null || !request.getUsername().matches("^[A-Za-z0-9]+$")) {
             throw new BusinessException("INVALID_USERNAME", "用户名只能包含英文或数字");
         }
@@ -89,11 +96,12 @@ public class UserService {
         }
         SystemUser user = new SystemUser();
         user.setUsername(request.getUsername());
-        user.setPasswordHash(request.getPassword() == null || request.getPassword().isEmpty() ? "123456" : request.getPassword());
-        user.setDisplayName(request.getDisplayName());
-        user.setEmail(request.getEmail());
-        user.setAvatar(request.getAvatar());
-        user.setStatus(request.getStatus() == null || request.getStatus().isEmpty() ? "ACTIVE" : request.getStatus());
+        user.setPasswordHash(normalizePassword(request.getPassword() == null || request.getPassword().isEmpty() ? "123456" : request.getPassword()));
+        user.setDisplayName(normalizeDisplayName(request.getDisplayName()));
+        user.setEmail(trimToNull(request.getEmail()));
+        user.setAvatar(trimToNull(request.getAvatar()));
+        user.setOrganizationId(request.getOrganizationId());
+        user.setStatus(normalizeStatus(request.getStatus()));
         systemUserMapper.insert(user);
         assignRole(user.getId(), request.getRoleCode() == null || request.getRoleCode().isEmpty() ? "TESTER" : request.getRoleCode());
         return toAssignableUser(user);
@@ -106,6 +114,44 @@ public class UserService {
             .stream()
             .map(this::toAssignableUser)
             .collect(Collectors.toList());
+    }
+
+    public List<AssignableUserResponse> listUsers() {
+        requirePermission("USER_MANAGE");
+        return systemUserMapper.selectList(new LambdaQueryWrapper<SystemUser>().orderByAsc(SystemUser::getId))
+            .stream()
+            .map(this::toAssignableUser)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public AssignableUserResponse updateUser(Long userId, UserUpdateRequest request) {
+        requirePermission("USER_MANAGE");
+        SystemUser user = getRequiredUser(userId);
+        String status = normalizeStatus(request.getStatus());
+        if ("DISABLED".equals(status) && userId.equals(CurrentUserContext.getUserId())) {
+            throw new BusinessException("CANNOT_DISABLE_SELF", "不能禁用当前登录用户");
+        }
+        if (userId.equals(CurrentUserContext.getUserId()) && isAdmin() && !ROLE_ADMIN.equals(request.getRoleCode())) {
+            throw new BusinessException("CANNOT_CHANGE_SELF_ROLE", "不能修改当前管理员的角色");
+        }
+        user.setDisplayName(normalizeDisplayName(request.getDisplayName()));
+        user.setEmail(trimToNull(request.getEmail()));
+        user.setAvatar(trimToNull(request.getAvatar()));
+        user.setOrganizationId(request.getOrganizationId());
+        user.setStatus(status);
+        systemUserMapper.updateById(user);
+        replaceRole(userId, request.getRoleCode());
+        return toAssignableUser(systemUserMapper.selectById(userId));
+    }
+
+    @Transactional
+    public AssignableUserResponse resetPassword(Long userId, String password) {
+        requirePermission("USER_MANAGE");
+        SystemUser user = getRequiredUser(userId);
+        user.setPasswordHash(normalizePassword(password));
+        systemUserMapper.updateById(user);
+        return toAssignableUser(systemUserMapper.selectById(userId));
     }
 
     public boolean hasPermission(String permission) {
@@ -125,6 +171,17 @@ public class UserService {
         if (!hasPermission(permission)) {
             throw new BusinessException("PERMISSION_DENIED", "无权限操作");
         }
+    }
+
+    public void createRegisteredUser(String username, String password, String displayName, Long organizationId) {
+        UserCreateRequest request = new UserCreateRequest();
+        request.setUsername(username);
+        request.setPassword(password);
+        request.setDisplayName(displayName);
+        request.setOrganizationId(organizationId);
+        request.setRoleCode("TESTER");
+        request.setStatus("ACTIVE");
+        createUserInternal(request);
     }
 
     private AssignableUserResponse toAssignableUser(SystemUser user) {
@@ -179,5 +236,42 @@ public class UserService {
         userRole.setUserId(userId);
         userRole.setRoleId(role.getId());
         systemUserRoleMapper.insert(userRole);
+    }
+
+    private void replaceRole(Long userId, String roleCode) {
+        systemUserRoleMapper.delete(new LambdaQueryWrapper<SystemUserRole>().eq(SystemUserRole::getUserId, userId));
+        assignRole(userId, roleCode == null || roleCode.trim().isEmpty() ? "TESTER" : roleCode.trim());
+    }
+
+    private String normalizeDisplayName(String displayName) {
+        String value = trimToNull(displayName);
+        if (value == null) {
+            throw new BusinessException("INVALID_DISPLAY_NAME", "姓名不能为空");
+        }
+        return value;
+    }
+
+    private String normalizeStatus(String status) {
+        String value = status == null || status.trim().isEmpty() ? "ACTIVE" : status.trim();
+        if (!"ACTIVE".equals(value) && !"DISABLED".equals(value)) {
+            throw new BusinessException("INVALID_USER_STATUS", "用户状态不正确");
+        }
+        return value;
+    }
+
+    private String normalizePassword(String password) {
+        String value = trimToNull(password);
+        if (value == null || value.length() < 6) {
+            throw new BusinessException("INVALID_PASSWORD", "密码长度不能小于 6 位");
+        }
+        return value;
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

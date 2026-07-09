@@ -76,6 +76,7 @@ public class RequirementService {
 
     @Transactional
     public RequirementResponse createRequirement(Long projectId, RequirementCreateRequest request) {
+        userService.requirePermission("REQUIREMENT_CREATE");
         projectService.getRequiredProject(projectId);
         Long exists = requirementMapper.selectCount(new LambdaQueryWrapper<Requirement>()
             .eq(Requirement::getProjectId, projectId)
@@ -106,6 +107,7 @@ public class RequirementService {
 
     @Transactional
     public RequirementResponse assignRequirement(Long requirementId, RequirementAssignRequest request) {
+        userService.requirePermission("REQUIREMENT_ASSIGN");
         Requirement requirement = getRequiredRequirement(requirementId);
         String currentStatus = requirement.getStatus() == null ? "COLLECTING" : requirement.getStatus();
         if (!"ASSIGNING".equals(currentStatus)) {
@@ -119,6 +121,7 @@ public class RequirementService {
 
     @Transactional
     public RequirementResponse transitionRequirement(Long requirementId, RequirementTransitionRequest request) {
+        userService.requirePermission("REQUIREMENT_TRANSITION");
         Requirement requirement = getRequiredRequirement(requirementId);
         String currentStatus = requirement.getStatus() == null ? "COLLECTING" : requirement.getStatus();
         String targetStatus = request.getTargetStatus();

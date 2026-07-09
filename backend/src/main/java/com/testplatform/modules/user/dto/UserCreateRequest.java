@@ -6,6 +6,7 @@ public class UserCreateRequest {
     private String displayName;
     private String email;
     private String avatar;
+    private Long organizationId;
     private String roleCode;
     private String status;
 
@@ -19,6 +20,8 @@ public class UserCreateRequest {
     public void setEmail(String email) { this.email = email; }
     public String getAvatar() { return avatar; }
     public void setAvatar(String avatar) { this.avatar = avatar; }
+    public Long getOrganizationId() { return organizationId; }
+    public void setOrganizationId(Long organizationId) { this.organizationId = organizationId; }
     public String getRoleCode() { return roleCode; }
     public void setRoleCode(String roleCode) { this.roleCode = roleCode; }
     public String getStatus() { return status; }

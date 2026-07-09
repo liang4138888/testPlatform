@@ -27,6 +27,10 @@ import com.testplatform.modules.user.service.UserService;
 @Service
 public class RoleService {
 
+    private static final String PERMISSION_TYPE_MENU = "MENU";
+    private static final String PERMISSION_TYPE_PAGE = "PAGE";
+    private static final String PERMISSION_TYPE_ACTION = "ACTION";
+
     private final SystemRoleMapper systemRoleMapper;
     private final SystemPermissionMapper systemPermissionMapper;
     private final SystemRolePermissionMapper systemRolePermissionMapper;
@@ -42,9 +46,20 @@ public class RoleService {
 
     public List<RoleResponse> listRoles() {
         requireRoleManage();
+        return loadRoles(true);
+    }
+
+    public List<RoleResponse> listRoleOptions() {
+        if (!userService.hasPermission("USER_MANAGE") && !userService.hasPermission("ROLE_MANAGE")) {
+            throw new BusinessException("PERMISSION_DENIED", "无权限操作");
+        }
+        return loadRoles(false);
+    }
+
+    private List<RoleResponse> loadRoles(boolean includePermissions) {
         return systemRoleMapper.selectList(new LambdaQueryWrapper<SystemRole>().orderByAsc(SystemRole::getId))
             .stream()
-            .map(role -> RoleResponse.from(role, getPermissionCodes(role.getId())))
+            .map(role -> RoleResponse.from(role, includePermissions ? getPermissionCodes(role.getId()) : Collections.emptyList()))
             .collect(Collectors.toList());
     }
 
@@ -87,7 +102,9 @@ public class RoleService {
 
     public List<PermissionResponse> listPermissions() {
         requireRoleManage();
-        return systemPermissionMapper.selectList(new LambdaQueryWrapper<SystemPermission>().orderByAsc(SystemPermission::getId))
+        return systemPermissionMapper.selectList(new LambdaQueryWrapper<SystemPermission>()
+                .orderByAsc(SystemPermission::getSortOrder)
+                .orderByAsc(SystemPermission::getId))
             .stream()
             .map(PermissionResponse::from)
             .collect(Collectors.toList());
@@ -98,6 +115,11 @@ public class RoleService {
         requireRoleManage();
         String code = normalizePermissionCode(request.getPermissionCode());
         String name = normalizePermissionName(request.getPermissionName());
+        String pageCode = normalizePageCode(request.getPageCode());
+        String pageName = normalizePageName(request.getPageName());
+        String permissionType = normalizePermissionType(request.getPermissionType());
+        Integer sortOrder = normalizeSortOrder(request.getSortOrder());
+        Long parentId = normalizeParentId(request.getParentId(), null);
         Long exists = systemPermissionMapper.selectCount(new LambdaQueryWrapper<SystemPermission>()
             .eq(SystemPermission::getPermissionCode, code));
         if (exists > 0) {
@@ -106,6 +128,11 @@ public class RoleService {
         SystemPermission permission = new SystemPermission();
         permission.setPermissionCode(code);
         permission.setPermissionName(name);
+        permission.setPageCode(pageCode);
+        permission.setPageName(pageName);
+        permission.setParentId(parentId);
+        permission.setPermissionType(permissionType);
+        permission.setSortOrder(sortOrder);
         systemPermissionMapper.insert(permission);
         return PermissionResponse.from(permission);
     }
@@ -119,6 +146,11 @@ public class RoleService {
         }
         String code = normalizePermissionCode(request.getPermissionCode());
         String name = normalizePermissionName(request.getPermissionName());
+        String pageCode = normalizePageCode(request.getPageCode());
+        String pageName = normalizePageName(request.getPageName());
+        String permissionType = normalizePermissionType(request.getPermissionType());
+        Integer sortOrder = normalizeSortOrder(request.getSortOrder());
+        Long parentId = normalizeParentId(request.getParentId(), permissionId);
         Long exists = systemPermissionMapper.selectCount(new LambdaQueryWrapper<SystemPermission>()
             .eq(SystemPermission::getPermissionCode, code)
             .ne(SystemPermission::getId, permissionId));
@@ -127,6 +159,11 @@ public class RoleService {
         }
         permission.setPermissionCode(code);
         permission.setPermissionName(name);
+        permission.setPageCode(pageCode);
+        permission.setPageName(pageName);
+        permission.setParentId(parentId);
+        permission.setPermissionType(permissionType);
+        permission.setSortOrder(sortOrder);
         systemPermissionMapper.updateById(permission);
         return PermissionResponse.from(permission);
     }
@@ -138,6 +175,11 @@ public class RoleService {
             .eq(SystemRolePermission::getPermissionId, permissionId));
         if (used > 0) {
             throw new BusinessException("PERMISSION_IN_USE", "权限已被角色使用，不能删除");
+        }
+        Long children = systemPermissionMapper.selectCount(new LambdaQueryWrapper<SystemPermission>()
+            .eq(SystemPermission::getParentId, permissionId));
+        if (children > 0) {
+            throw new BusinessException("PERMISSION_HAS_CHILDREN", "权限节点存在子节点，不能删除");
         }
         systemPermissionMapper.deleteById(permissionId);
     }
@@ -215,8 +257,75 @@ public class RoleService {
         return permissionName.trim();
     }
 
+    private String normalizePageCode(String pageCode) {
+        if (pageCode == null || pageCode.trim().isEmpty()) {
+            throw new BusinessException("INVALID_PERMISSION_PAGE", "页面编码不能为空");
+        }
+        String code = pageCode.trim().toUpperCase();
+        if (!code.matches("^[A-Z0-9_]+$")) {
+            throw new BusinessException("INVALID_PERMISSION_PAGE", "页面编码只能包含大写英文、数字和下划线");
+        }
+        return code;
+    }
+
+    private String normalizePageName(String pageName) {
+        if (pageName == null || pageName.trim().isEmpty()) {
+            throw new BusinessException("INVALID_PERMISSION_PAGE", "页面名称不能为空");
+        }
+        return pageName.trim();
+    }
+
+    private String normalizePermissionType(String permissionType) {
+        if (permissionType == null || permissionType.trim().isEmpty()) {
+            throw new BusinessException("INVALID_PERMISSION_TYPE", "权限类型不能为空");
+        }
+        String type = permissionType.trim().toUpperCase();
+        if (!PERMISSION_TYPE_MENU.equals(type) && !PERMISSION_TYPE_PAGE.equals(type) && !PERMISSION_TYPE_ACTION.equals(type)) {
+            throw new BusinessException("INVALID_PERMISSION_TYPE", "权限类型只能是菜单、页面或操作");
+        }
+        return type;
+    }
+
+    private Integer normalizeSortOrder(Integer sortOrder) {
+        return sortOrder == null ? 0 : sortOrder;
+    }
+
+    private Long normalizeParentId(Long parentId, Long currentPermissionId) {
+        if (parentId == null) {
+            return null;
+        }
+        if (currentPermissionId != null && parentId.equals(currentPermissionId)) {
+            throw new BusinessException("INVALID_PERMISSION_PARENT", "父节点不能选择自身");
+        }
+        SystemPermission parent = systemPermissionMapper.selectById(parentId);
+        if (parent == null) {
+            throw new BusinessException("INVALID_PERMISSION_PARENT", "父节点不存在");
+        }
+        if (currentPermissionId != null && isDescendant(parentId, currentPermissionId)) {
+            throw new BusinessException("INVALID_PERMISSION_PARENT", "父节点不能选择当前节点的子节点");
+        }
+        return parentId;
+    }
+
+    private boolean isDescendant(Long permissionId, Long ancestorId) {
+        Long currentId = permissionId;
+        Set<Long> visited = new java.util.HashSet<>();
+        while (currentId != null && visited.add(currentId)) {
+            SystemPermission permission = systemPermissionMapper.selectById(currentId);
+            if (permission == null) {
+                return false;
+            }
+            Long parentId = permission.getParentId();
+            if (ancestorId.equals(parentId)) {
+                return true;
+            }
+            currentId = parentId;
+        }
+        return false;
+    }
+
     private void requireRoleManage() {
-        if (!userService.hasPermission("USER_MANAGE") && !userService.hasPermission("ROLE_MANAGE")) {
+        if (!userService.hasPermission("ROLE_MANAGE")) {
             throw new BusinessException("PERMISSION_DENIED", "无权限操作");
         }
     }

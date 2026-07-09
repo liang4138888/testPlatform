@@ -41,7 +41,7 @@ public class FileController {
     }
 
     private ResponseEntity<InputStreamResource> fileResponse(Long fileId, String disposition) throws IOException {
-        FileObject fileObject = fileObjectService.getRequiredFile(fileId);
+        FileObject fileObject = fileObjectService.getRequiredReadableFile(fileId);
         InputStream inputStream = localStorageService.open(fileObject.getStoragePath());
         String encodedName = URLEncoder.encode(fileObject.getOriginalName(), StandardCharsets.UTF_8.name())
             .replace("+", "%20");

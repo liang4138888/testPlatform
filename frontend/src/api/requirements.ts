@@ -196,27 +196,23 @@ export interface RequirementTaskPayload {
   endTime: string;
 }
 
-function buildQuery(params: Record<string, string | number | undefined>) {
-  const search = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== '') {
-      search.set(key, String(value));
-    }
-  });
-  const query = search.toString();
-  return query ? `?${query}` : '';
-}
-
-export function listRequirementBoard(params: RequirementBoardQuery = {}) {
-  return request<Requirement[]>(`/api/requirements${buildQuery({
-    projectId: params.projectId,
-    status: params.status,
-    keyword: params.keyword
-  })}`);
-}
-
 export function listRequirements(projectId: number) {
   return request<Requirement[]>(`/api/projects/${projectId}/requirements`);
+}
+
+export async function listRequirementBoard(params: RequirementBoardQuery = {}) {
+  if (!params.projectId) {
+    return [];
+  }
+  const requirements = await listRequirements(params.projectId);
+  const keyword = params.keyword?.trim().toLowerCase();
+  return requirements.filter((requirement) => {
+    const statusMatched = !params.status || requirement.status === params.status;
+    const keywordMatched = !keyword
+      || requirement.name.toLowerCase().includes(keyword)
+      || requirement.requirementNo.toLowerCase().includes(keyword);
+    return statusMatched && keywordMatched;
+  });
 }
 
 export function createRequirement(projectId: number, payload: RequirementCreatePayload) {

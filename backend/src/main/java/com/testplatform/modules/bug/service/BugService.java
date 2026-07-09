@@ -69,6 +69,7 @@ public class BugService {
     }
 
     public List<BugListItemResponse> list(Long projectId, Long requirementId, String status, String severity, Long assigneeId, String keyword) {
+        userService.requirePermission("BUG_VIEW");
         LambdaQueryWrapper<Bug> query = new LambdaQueryWrapper<Bug>()
             .eq(projectId != null, Bug::getProjectId, projectId)
             .eq(requirementId != null, Bug::getRequirementId, requirementId)
@@ -91,6 +92,7 @@ public class BugService {
 
     @Transactional
     public BugDetailResponse create(Long requirementId, BugCreateRequest request) {
+        userService.requirePermission("BUG_CREATE");
         Long operatorId = CurrentUserContext.getUserId();
         Requirement requirement = requirementService.getRequiredRequirement(requirementId);
         if (request.getAssigneeId() == null) {
@@ -115,6 +117,7 @@ public class BugService {
     }
 
     public BugDetailResponse detail(Long bugId) {
+        userService.requirePermission("BUG_VIEW");
         Bug bug = getRequiredBug(bugId);
         BugDetailResponse response = BugDetailResponse.from(bug, attachmentCount(bugId));
         response.setAttachments(attachments(bugId));
@@ -127,6 +130,19 @@ public class BugService {
     public BugDetailResponse update(Long bugId, BugUpdateRequest request) {
         Long operatorId = CurrentUserContext.getUserId();
         Bug bug = getRequiredBug(bugId);
+        boolean editChanged = !Objects.equals(bug.getTitle(), request.getTitle())
+            || !Objects.equals(bug.getDescription(), request.getDescription())
+            || !Objects.equals(bug.getSeverity(), request.getSeverity())
+            || !Objects.equals(bug.getPriority(), request.getPriority())
+            || (request.getCaseSuiteId() != null && !Objects.equals(bug.getCaseSuiteId(), request.getCaseSuiteId()));
+        boolean assignChanged = request.getAssigneeId() != null && !Objects.equals(bug.getAssigneeId(), request.getAssigneeId());
+        boolean statusChanged = request.getStatus() != null && !Objects.equals(bug.getStatus(), request.getStatus());
+        if (editChanged) {
+            userService.requirePermission("BUG_EDIT");
+        }
+        if (assignChanged) {
+            userService.requirePermission("BUG_ASSIGN");
+        }
         change(bug, "标题", bug.getTitle(), request.getTitle(), operatorId);
         change(bug, "描述", bug.getDescription(), request.getDescription(), operatorId);
         change(bug, "严重级别", bug.getSeverity(), request.getSeverity(), operatorId);
@@ -140,7 +156,7 @@ public class BugService {
             bugHistoryService.record(bugId, "修改关联用例集", "caseSuiteId", String.valueOf(bug.getCaseSuiteId()), String.valueOf(request.getCaseSuiteId()), operatorId);
             bug.setCaseSuiteId(request.getCaseSuiteId());
         }
-        if (request.getStatus() != null && !Objects.equals(bug.getStatus(), request.getStatus())) {
+        if (statusChanged) {
             validateStatusPermission(request.getStatus());
             bugHistoryService.record(bugId, "修改状态", "status", bug.getStatus(), request.getStatus(), operatorId);
             bug.setStatus(request.getStatus());
@@ -153,6 +169,7 @@ public class BugService {
 
     @Transactional
     public BugAttachmentResponse uploadImage(Long bugId, MultipartFile file) {
+        userService.requirePermission("BUG_UPLOAD_IMAGE");
         Bug bug = getRequiredBug(bugId);
         validateImage(file);
         FileObject fileObject = fileObjectService.createFromStored(localStorageService.store(file, "bug/image"), FileObjectService.KIND_BUG_IMAGE);
@@ -170,6 +187,7 @@ public class BugService {
 
     @Transactional
     public BugCommentResponse addComment(Long bugId, BugCommentCreateRequest request) {
+        userService.requirePermission("BUG_COMMENT");
         Bug bug = getRequiredBug(bugId);
         BugComment comment = new BugComment();
         comment.setBugId(bugId);
@@ -183,6 +201,8 @@ public class BugService {
     }
 
     public List<BugAttachmentResponse> attachments(Long bugId) {
+        userService.requirePermission("BUG_VIEW");
+        getRequiredBug(bugId);
         return bugAttachmentMapper.selectList(new LambdaQueryWrapper<BugAttachment>()
                 .eq(BugAttachment::getBugId, bugId)
                 .orderByAsc(BugAttachment::getSortOrder))
@@ -190,6 +210,8 @@ public class BugService {
     }
 
     public List<BugCommentResponse> comments(Long bugId) {
+        userService.requirePermission("BUG_VIEW");
+        getRequiredBug(bugId);
         return bugCommentMapper.selectList(new LambdaQueryWrapper<BugComment>()
                 .eq(BugComment::getBugId, bugId)
                 .orderByAsc(BugComment::getCreatedAt))
@@ -197,6 +219,8 @@ public class BugService {
     }
 
     public List<BugHistoryResponse> histories(Long bugId) {
+        userService.requirePermission("BUG_VIEW");
+        getRequiredBug(bugId);
         return bugHistoryMapper.selectList(new LambdaQueryWrapper<BugHistory>()
                 .eq(BugHistory::getBugId, bugId)
                 .orderByAsc(BugHistory::getCreatedAt))

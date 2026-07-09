@@ -10,8 +10,8 @@
         <p v-if="suite" class="muted">{{ suite.requirementNo }} {{ suite.requirementName }} · {{ suite.name }}</p>
       </div>
       <div class="actions-inline">
-        <el-button @click="goToEditor">编辑用例</el-button>
-        <el-button type="primary" :loading="exporting" @click="exportXmind">生成导出文件</el-button>
+        <el-button v-if="canEditCase" @click="goToEditor">编辑用例</el-button>
+        <el-button v-if="canExportCase" type="primary" :loading="exporting" @click="exportXmind">生成导出文件</el-button>
       </div>
     </div>
 
@@ -25,7 +25,8 @@
       <el-table-column prop="createdAt" label="生成时间" width="190" />
       <el-table-column label="操作" width="120">
         <template #default="{ row }">
-          <el-button link type="primary" @click="downloadFile(row.id)">下载</el-button>
+          <el-button v-if="canDownloadFile(row)" link type="primary" @click="downloadFile(row.id)">下载</el-button>
+          <span v-else class="muted">无权限</span>
         </template>
       </el-table-column>
     </el-table>
@@ -37,7 +38,9 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { exportCaseSuite, getCaseSuite, type CaseSuiteDetail } from '../api/caseSuites';
-import { fileDownloadUrl, listCaseSuiteFiles, type FileObject } from '../api/files';
+import { downloadFile as downloadFileBlob, listCaseSuiteFiles, type FileObject } from '../api/files';
+import { showErrorMessage } from '../api/http';
+import { hasPermission } from '../utils/permissions';
 
 const route = useRoute();
 const router = useRouter();
@@ -50,6 +53,18 @@ const loading = ref(false);
 const exporting = ref(false);
 const suite = ref<CaseSuiteDetail>();
 const files = ref<FileObject[]>([]);
+const canEditCase = computed(() => hasPermission('CASE_EDIT'));
+const canExportCase = computed(() => hasPermission('CASE_EXPORT'));
+
+function canDownloadFile(file: FileObject) {
+  if (file.fileKind === 'ORIGINAL') {
+    return canEditCase.value;
+  }
+  if (file.fileKind === 'EXPORTED') {
+    return canExportCase.value;
+  }
+  return false;
+}
 
 async function loadData() {
   if (!suiteId.value) {
@@ -60,7 +75,7 @@ async function loadData() {
     suite.value = await getCaseSuite(suiteId.value);
     files.value = await listCaseSuiteFiles(suiteId.value);
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '文件列表加载失败');
+    showErrorMessage(error, '文件列表加载失败');
   } finally {
     loading.value = false;
   }
@@ -75,16 +90,18 @@ async function exportXmind() {
     const result = await exportCaseSuite(suiteId.value);
     ElMessage.success(`导出成功：${result.fileName}`);
     await loadData();
-    window.open(fileDownloadUrl(result.exportedFileId), '_blank');
+    await downloadFileBlob(result.exportedFileId);
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '导出失败');
+    showErrorMessage(error, '导出失败');
   } finally {
     exporting.value = false;
   }
 }
 
 function downloadFile(fileId: number) {
-  window.open(fileDownloadUrl(fileId), '_blank');
+  downloadFileBlob(fileId).catch((error) => {
+    showErrorMessage(error, '下载失败');
+  });
 }
 
 function goToEditor() {

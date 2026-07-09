@@ -5,6 +5,7 @@ import CaseSuiteListView from '../views/CaseSuiteListView.vue';
 import CaseEditorView from '../views/CaseEditorView.vue';
 import LoginView from '../views/LoginView.vue';
 import BugView from '../views/BugView.vue';
+import OrganizationManagementView from '../views/OrganizationManagementView.vue';
 import UserManagementView from '../views/UserManagementView.vue';
 import RolePermissionView from '../views/RolePermissionView.vue';
 import { cachedUser, currentUser } from '../api/auth';
@@ -16,6 +17,7 @@ const routePermissions: Record<string, string> = {
   '/cases': 'MENU_CASE',
   '/cases/edit': 'MENU_CASE',
   '/bugs': 'MENU_BUG',
+  '/organizations': 'MENU_ORGANIZATION',
   '/users': 'MENU_USER',
   '/roles': 'MENU_ROLE'
 };
@@ -24,7 +26,8 @@ export const menuItems = [
   { path: '/projects', label: '项目管理', permission: 'MENU_PROJECT' },
   { path: '/requirements', label: '需求管理', permission: 'MENU_REQUIREMENT' },
   { path: '/cases', label: '用例管理', permission: 'MENU_CASE' },
-  { path: '/bugs', label: '缺陷管理', permission: 'MENU_BUG' },
+  { path: '/bugs', label: '缺陷管理', permission: 'MENU_BUG', requiredPermissions: ['BUG_VIEW'] },
+  { path: '/organizations', label: '组织架构管理', permission: 'MENU_ORGANIZATION' },
   { path: '/users', label: '用户管理', permission: 'MENU_USER' },
   { path: '/roles', label: '权限管理', permission: 'MENU_ROLE' }
 ];
@@ -41,7 +44,7 @@ function hasPermission(permission?: string) {
 }
 
 function firstAllowedPath() {
-  return menuItems.find((item) => hasPermission(item.permission))?.path ?? '/login';
+  return menuItems.find((item) => hasPermission(item.permission) && (item.requiredPermissions?.every(hasPermission) ?? true))?.path ?? '/login';
 }
 
 const router = createRouter({
@@ -49,7 +52,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/projects'
+      redirect: '/login'
     },
     {
       path: '/login',
@@ -102,7 +105,17 @@ const router = createRouter({
       meta: {
         title: '缺陷管理',
         description: '维护 Bug、图片、评论、历史和状态流转。',
-        permission: 'MENU_BUG'
+        permission: 'MENU_BUG',
+        requiredPermissions: ['BUG_VIEW']
+      }
+    },
+    {
+      path: '/organizations',
+      component: OrganizationManagementView,
+      meta: {
+        title: '组织架构管理',
+        description: '维护组织、部门和负责人。',
+        permission: 'MENU_ORGANIZATION'
       }
     },
     {
@@ -137,7 +150,10 @@ router.beforeEach(async (to) => {
     await currentUser();
   }
   const permission = String(to.meta.permission ?? routePermissions[to.path] ?? '');
-  if (permission && !hasPermission(permission)) {
+  const requiredPermissions = Array.isArray(to.meta.requiredPermissions)
+    ? to.meta.requiredPermissions.map(String)
+    : [];
+  if ((permission && !hasPermission(permission)) || !requiredPermissions.every(hasPermission)) {
     return firstAllowedPath();
   }
   return true;

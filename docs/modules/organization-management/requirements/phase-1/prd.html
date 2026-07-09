@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>组织架构管理与用户注册需求设计</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --primary: #2563eb;
+      --primary-soft: #eff6ff;
+      --green: #059669;
+      --amber: #d97706;
+      --red: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .page { max-width: 1180px; margin: 0 auto; padding: 32px; }
+    .hero { background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: #fff; border-radius: 18px; padding: 32px; box-shadow: 0 16px 40px rgba(37, 99, 235, .18); }
+    .hero h1 { margin: 0 0 10px; font-size: 30px; }
+    .hero p { margin: 0; opacity: .9; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: 0 10px 26px rgba(15, 23, 42, .04); }
+    .card.full { grid-column: 1 / -1; }
+    h2 { margin: 0 0 16px; font-size: 20px; }
+    h3 { margin: 18px 0 10px; font-size: 16px; }
+    ul { margin: 8px 0 0; padding-left: 22px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; overflow: hidden; border-radius: 12px; }
+    th, td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { background: #f9fafb; font-weight: 700; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    pre { margin: 10px 0 0; padding: 14px; background: #111827; color: #e5e7eb; border-radius: 12px; overflow: auto; }
+    .tag { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .tag.blue { background: var(--primary-soft); color: var(--primary); }
+    .tag.green { background: #ecfdf5; color: var(--green); }
+    .tag.amber { background: #fffbeb; color: var(--amber); }
+    .layout-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+    .mock { border: 1px solid var(--line); border-radius: 14px; background: #fafafa; padding: 14px; }
+    .mock-title { font-weight: 800; margin-bottom: 10px; }
+    .field { height: 34px; border: 1px solid var(--line); background: #fff; border-radius: 8px; margin: 8px 0; padding: 6px 10px; color: var(--muted); }
+    .button { height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; background: var(--primary); color: #fff; border-radius: 8px; font-weight: 700; margin-top: 8px; }
+    .tree-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr .8fr .8fr; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .indent { padding-left: 22px; }
+    .note { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>组织架构管理与用户注册需求设计</h1>
+      <p>新增组织/部门维护能力，注册用户选择所属组织，系统默认进入登录/注册入口。</p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>1. 背景</h2>
+        <p>当前系统已有登录、用户管理、角色权限管理和菜单权限控制，但缺少组织/部门结构维护能力，也没有面向未登录用户的注册入口。为了支持外部试用和后续按组织管理用户，需要新增组织架构管理，并把用户注册接入组织归属。</p>
+      </article>
+
+      <article class="card">
+        <h2>2. 目标</h2>
+        <ul>
+          <li>系统访问 <code>/</code> 默认进入登录/注册页面。</li>
+          <li>登录页支持登录与注册切换。</li>
+          <li>注册用户必须选择所属组织。</li>
+          <li>新注册用户默认分配 <code>TESTER</code> 角色。</li>
+          <li>管理员可以维护组织架构。</li>
+          <li>组织架构菜单受权限控制。</li>
+        </ul>
+      </article>
+
+      <article class="card full">
+        <h2>3. 功能范围</h2>
+        <div class="grid" style="margin-top:0">
+          <div>
+            <h3>本期实现</h3>
+            <ul>
+              <li>组织树查询、新增组织、编辑组织。</li>
+              <li>新增组织时只维护组织基础信息，创建后再通过编辑设置负责人。</li>
+              <li>设置上级组织、负责人、排序、启用/禁用。</li>
+              <li>登录页注册。</li>
+              <li>注册成功自动登录。</li>
+            </ul>
+          </div>
+          <div>
+            <h3>本期不实现</h3>
+            <ul>
+              <li>删除组织、拖拽排序。</li>
+              <li>组织成员批量调整、用户多组织归属。</li>
+              <li>按组织做数据权限隔离。</li>
+              <li>密码加密迁移。</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="card full">
+        <h2>4. 角色权限设计</h2>
+        <table>
+          <thead><tr><th>权限码</th><th>权限名称</th><th>默认授权角色</th></tr></thead>
+          <tbody><tr><td><code>MENU_ORGANIZATION</code></td><td>组织架构管理</td><td><span class="tag green">ADMIN</span></td></tr></tbody>
+        </table>
+        <table>
+          <thead><tr><th>功能</th><th>权限要求</th></tr></thead>
+          <tbody>
+            <tr><td>查看组织架构菜单</td><td><code>MENU_ORGANIZATION</code></td></tr>
+            <tr><td>查询组织树</td><td><code>MENU_ORGANIZATION</code></td></tr>
+            <tr><td>新增组织</td><td><code>MENU_ORGANIZATION</code></td></tr>
+            <tr><td>编辑组织</td><td><code>MENU_ORGANIZATION</code></td></tr>
+            <tr><td>获取注册组织选项</td><td>无需登录</td></tr>
+            <tr><td>用户注册</td><td>无需登录</td></tr>
+          </tbody>
+        </table>
+      </article>
+
+      <article class="card full">
+        <h2>5. 页面设计</h2>
+        <div class="layout-preview">
+          <div class="mock">
+            <div class="mock-title">登录 / 注册页：<code>/login</code></div>
+            <div class="tag blue">登录</div>
+            <div class="tag">注册</div>
+            <div class="field">用户名</div>
+            <div class="field">密码</div>
+            <div class="button">登录</div>
+            <h3>注册字段</h3>
+            <div class="field">用户名</div>
+            <div class="field">昵称</div>
+            <div class="field">密码</div>
+            <div class="field">确认密码</div>
+            <div class="field">所属组织</div>
+          </div>
+          <div class="mock">
+            <div class="mock-title">组织架构管理页：<code>/organizations</code></div>
+            <div class="button">新增组织</div>
+            <div class="field">新增弹窗：组织编码 / 组织名称 / 上级组织 / 排序 / 状态</div>
+            <div class="field">列表支持“创建子组织”，自动带入当前组织为上级组织</div>
+            <div class="field">编辑弹窗：可追加维护负责人</div>
+            <div class="tree-row"><strong>组织名称</strong><strong>组织编码</strong><strong>负责人</strong><strong>状态</strong><strong>操作</strong></div>
+            <div class="tree-row"><span>默认组织</span><span>DEFAULT</span><span>-</span><span class="tag green">启用</span><span>创建子组织 / 编辑</span></div>
+            <div class="tree-row"><span class="indent">技术部</span><span>DEV</span><span>张三</span><span class="tag green">启用</span><span>创建子组织 / 编辑</span></div>
+            <div class="tree-row"><span class="indent">测试部</span><span>QA</span><span>李四</span><span class="tag green">启用</span><span>创建子组织 / 编辑</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card full">
+        <h2>6. 数据模型设计</h2>
+        <h3>组织表：<code>system_organization</code></h3>
+        <table>
+          <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td><code>id</code></td><td>BIGINT</td><td>主键</td></tr>
+            <tr><td><code>parent_id</code></td><td>BIGINT</td><td>上级组织 ID</td></tr>
+            <tr><td><code>org_code</code></td><td>VARCHAR</td><td>组织编码，唯一</td></tr>
+            <tr><td><code>org_name</code></td><td>VARCHAR</td><td>组织名称</td></tr>
+            <tr><td><code>leader_user_id</code></td><td>BIGINT</td><td>负责人用户 ID</td></tr>
+            <tr><td><code>sort_order</code></td><td>INT</td><td>排序</td></tr>
+            <tr><td><code>status</code></td><td>VARCHAR</td><td><code>ACTIVE</code> / <code>DISABLED</code></td></tr>
+            <tr><td><code>created_at</code></td><td>DATETIME</td><td>创建时间</td></tr>
+            <tr><td><code>updated_at</code></td><td>DATETIME</td><td>更新时间</td></tr>
+            <tr><td><code>deleted</code></td><td>TINYINT</td><td>逻辑删除</td></tr>
+          </tbody>
+        </table>
+        <h3>用户表扩展：<code>system_user</code></h3>
+        <table>
+          <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+          <tbody><tr><td><code>organization_id</code></td><td>BIGINT</td><td>所属组织 ID，可为空</td></tr></tbody>
+        </table>
+      </article>
+
+      <article class="card full">
+        <h2>7. 校验规则</h2>
+        <div class="grid" style="margin-top:0">
+          <div>
+            <h3>组织校验</h3>
+            <ul>
+              <li>组织编码不能为空，只能包含英文、数字、下划线，且不可重复。</li>
+              <li>组织名称不能为空。</li>
+              <li>上级组织不能是自己，也不能是自己的子级。</li>
+              <li>状态只能是 <code>ACTIVE</code> 或 <code>DISABLED</code>。</li>
+            </ul>
+          </div>
+          <div>
+            <h3>注册校验</h3>
+            <ul>
+              <li>用户名不能为空，只能包含英文或数字，且不可重复。</li>
+              <li>昵称不能为空。</li>
+              <li>密码不能为空，长度不能小于 6。</li>
+              <li>确认密码必须与密码一致。</li>
+              <li>组织必须存在且启用。</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="card full">
+        <h2>8. 验收标准</h2>
+        <ul>
+          <li>访问 <code>/</code> 自动进入 <code>/login</code>。</li>
+          <li>登录页可以切换登录和注册，注册页可以加载组织下拉。</li>
+          <li>注册成功后自动登录，注册用户默认角色为 <code>TESTER</code>。</li>
+          <li>重复用户名注册失败并提示。</li>
+          <li>管理员能看到“组织架构管理”菜单，普通用户看不到。</li>
+          <li>管理员可以新增和编辑组织，组织树展示层级正确。</li>
+          <li>禁用组织不能被注册选择。</li>
+          <li>未登录不能访问组织管理接口，但可以访问注册接口。</li>
+        </ul>
+      </article>
+
+      <article class="card full">
+        <h2>9. 风险与说明</h2>
+        <ul>
+          <li>当前系统密码使用明文比较，本次为了兼容已有账号不做密码加密迁移。</li>
+          <li>注册接口必须使用独立请求对象，不能复用后台用户创建请求，避免用户自选角色或状态。</li>
+          <li>注册接口只放行精确路径，不放行整个 <code>/api/auth/**</code>。</li>
+          <li>组织删除暂不实现，避免影响已有用户归属。</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,5 +1,6 @@
 <template>
-  <el-container class="app-shell">
+  <router-view v-if="route.path === '/login'" />
+  <el-container v-else class="app-shell">
     <el-aside width="232px" class="sidebar">
       <div class="brand">测试平台</div>
       <el-menu :default-active="activeMenu" router class="nav">
@@ -67,7 +68,7 @@ const visibleMenus = computed(() => {
     return menuItems;
   }
   const permissions = user?.permissions ?? [];
-  return menuItems.filter((item) => permissions.includes(item.permission));
+  return menuItems.filter((item) => permissions.includes(item.permission) && (item.requiredPermissions?.every((permission) => permissions.includes(permission)) ?? true));
 });
 
 const userAvatar = computed(() => {

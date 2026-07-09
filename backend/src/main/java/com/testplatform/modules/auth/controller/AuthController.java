@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.testplatform.common.response.ApiResponse;
 import com.testplatform.modules.auth.dto.LoginRequest;
 import com.testplatform.modules.auth.dto.LoginResponse;
+import com.testplatform.modules.auth.dto.RegisterOptionsResponse;
+import com.testplatform.modules.auth.dto.RegisterRequest;
 import com.testplatform.modules.auth.service.AuthService;
 import com.testplatform.modules.auth.support.CurrentUserContext;
 import com.testplatform.modules.user.dto.CurrentUserResponse;
@@ -27,6 +29,16 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(@RequestBody LoginRequest request) {
         return ApiResponse.ok(authService.login(request));
+    }
+
+    @GetMapping("/register/options")
+    public ApiResponse<RegisterOptionsResponse> registerOptions() {
+        return ApiResponse.ok(authService.registerOptions());
+    }
+
+    @PostMapping("/register")
+    public ApiResponse<LoginResponse> register(@RequestBody RegisterRequest request) {
+        return ApiResponse.ok(authService.register(request));
     }
 
     @PostMapping("/logout")

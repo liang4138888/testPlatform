@@ -23,7 +23,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             return true;
         }
         String path = request.getRequestURI();
-        if (path.startsWith("/api/auth/login") || path.startsWith("/api/files/") || path.startsWith("/api/health")) {
+        if (path.startsWith("/api/auth/login") || path.startsWith("/api/auth/register") || path.startsWith("/api/health")) {
             return true;
         }
         String token = resolveToken(request.getHeader("Authorization"));

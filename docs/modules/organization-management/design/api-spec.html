@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>组织架构管理与用户注册接口设计</title>
+  <style>
+    :root { --bg:#f6f8fc; --card:#fff; --text:#1f2937; --muted:#6b7280; --line:#e5e7eb; --primary:#2563eb; --green:#059669; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .page { max-width:1100px; margin:0 auto; padding:32px; }
+    .hero { background:#111827; color:#fff; border-radius:18px; padding:30px; }
+    .hero h1 { margin:0 0 8px; font-size:28px; }
+    .hero p { margin:0; color:#d1d5db; }
+    .api { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; margin-top:18px; box-shadow:0 10px 24px rgba(15,23,42,.04); }
+    .api-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .method { padding:4px 10px; border-radius:999px; color:#fff; font-weight:800; font-size:12px; }
+    .get { background:#2563eb; } .post { background:#059669; } .put { background:#d97706; }
+    code, pre { font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace; }
+    pre { margin:10px 0 0; padding:14px; background:#0f172a; color:#e5e7eb; border-radius:12px; overflow:auto; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; }
+    th,td { border:1px solid var(--line); padding:10px 12px; text-align:left; vertical-align:top; }
+    th { background:#f9fafb; }
+    .muted { color:var(--muted); }
+    .perm { display:inline-block; padding:3px 9px; border-radius:999px; background:#eff6ff; color:var(--primary); font-weight:700; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>组织架构管理与用户注册接口设计</h1>
+      <p>接口遵循现有 <code>ApiResponse</code> 包装结构：<code>{ code, message, data }</code>。</p>
+    </section>
+
+    <section class="api">
+      <div class="api-head"><span class="method get">GET</span><h2>获取注册选项</h2></div>
+      <p><code>/api/auth/register/options</code></p>
+      <p class="muted">无需登录。返回注册页可选择的启用组织。</p>
+      <h3>响应</h3>
+      <pre>{
+  "code": "0",
+  "message": "ok",
+  "data": {
+    "organizations": [
+      {
+        "id": 1,
+        "orgCode": "DEFAULT",
+        "orgName": "默认组织"
+      }
+    ]
+  }
+}</pre>
+    </section>
+
+    <section class="api">
+      <div class="api-head"><span class="method post">POST</span><h2>用户注册</h2></div>
+      <p><code>/api/auth/register</code></p>
+      <p class="muted">无需登录。注册成功后返回与登录接口一致的数据结构。</p>
+      <h3>请求</h3>
+      <pre>{
+  "username": "tester01",
+  "displayName": "测试人员01",
+  "password": "123456",
+  "confirmPassword": "123456",
+  "organizationId": 1
+}</pre>
+      <h3>响应</h3>
+      <pre>{
+  "code": "0",
+  "message": "ok",
+  "data": {
+    "token": "xxx",
+    "user": {
+      "id": 10,
+      "username": "tester01",
+      "displayName": "测试人员01",
+      "roles": ["TESTER"],
+      "permissions": []
+    }
+  }
+}</pre>
+      <h3>业务规则</h3>
+      <table>
+        <thead><tr><th>字段</th><th>规则</th></tr></thead>
+        <tbody>
+          <tr><td><code>username</code></td><td>必填，只允许英文或数字，不可重复。</td></tr>
+          <tr><td><code>displayName</code></td><td>必填。</td></tr>
+          <tr><td><code>password</code></td><td>必填，至少 6 位。</td></tr>
+          <tr><td><code>confirmPassword</code></td><td>必须与密码一致。</td></tr>
+          <tr><td><code>organizationId</code></td><td>必填，组织必须存在且启用。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="api">
+      <div class="api-head"><span class="method get">GET</span><h2>查询组织树</h2></div>
+      <p><code>/api/organizations/tree</code></p>
+      <p>权限：<span class="perm">MENU_ORGANIZATION</span></p>
+      <h3>响应</h3>
+      <pre>{
+  "code": "0",
+  "message": "ok",
+  "data": [
+    {
+      "id": 1,
+      "parentId": null,
+      "orgCode": "DEFAULT",
+      "orgName": "默认组织",
+      "leaderUserId": null,
+      "leaderName": null,
+      "sortOrder": 0,
+      "status": "ACTIVE",
+      "children": []
+    }
+  ]
+}</pre>
+    </section>
+
+    <section class="api">
+      <div class="api-head"><span class="method post">POST</span><h2>新增组织</h2></div>
+      <p><code>/api/organizations</code></p>
+      <p>权限：<span class="perm">MENU_ORGANIZATION</span></p>
+      <h3>请求</h3>
+      <p class="muted">新增组织只提交基础信息，不设置负责人；负责人在组织创建后通过编辑接口维护。</p>
+      <pre>{
+  "parentId": 1,
+  "orgCode": "QA",
+  "orgName": "测试部",
+  "sortOrder": 10,
+  "status": "ACTIVE"
+}</pre>
+      <h3>响应</h3>
+      <pre>{
+  "code": "0",
+  "message": "ok",
+  "data": {
+    "id": 2,
+    "parentId": 1,
+    "orgCode": "QA",
+    "orgName": "测试部",
+    "leaderUserId": null,
+    "leaderName": null,
+    "sortOrder": 10,
+    "status": "ACTIVE",
+    "children": []
+  }
+}</pre>
+    </section>
+
+    <section class="api">
+      <div class="api-head"><span class="method put">PUT</span><h2>编辑组织</h2></div>
+      <p><code>/api/organizations/{id}</code></p>
+      <p>权限：<span class="perm">MENU_ORGANIZATION</span></p>
+      <h3>请求</h3>
+      <pre>{
+  "parentId": 1,
+  "orgCode": "QA",
+  "orgName": "测试部",
+  "leaderUserId": 3,
+  "sortOrder": 10,
+  "status": "ACTIVE"
+}</pre>
+      <h3>响应</h3>
+      <pre>{
+  "code": "0",
+  "message": "ok",
+  "data": {
+    "id": 2,
+    "parentId": 1,
+    "orgCode": "QA",
+    "orgName": "测试部",
+    "leaderUserId": 3,
+    "leaderName": "张三",
+    "sortOrder": 10,
+    "status": "ACTIVE",
+    "children": []
+  }
+}</pre>
+    </section>
+  </main>
+</body>
+</html>

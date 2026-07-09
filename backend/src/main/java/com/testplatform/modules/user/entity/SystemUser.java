@@ -17,6 +17,7 @@ public class SystemUser {
     private String displayName;
     private String email;
     private String avatar;
+    private Long organizationId;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -35,6 +36,8 @@ public class SystemUser {
     public void setEmail(String email) { this.email = email; }
     public String getAvatar() { return avatar; }
     public void setAvatar(String avatar) { this.avatar = avatar; }
+    public Long getOrganizationId() { return organizationId; }
+    public void setOrganizationId(Long organizationId) { this.organizationId = organizationId; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public LocalDateTime getCreatedAt() { return createdAt; }

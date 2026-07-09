@@ -49,6 +49,7 @@ public class RequirementTaskService {
 
     @Transactional
     public RequirementTaskResponse create(Long requirementId, RequirementTaskRequest request) {
+        userService.requirePermission("REQUIREMENT_TASK_MANAGE");
         Requirement requirement = requirementService.getRequiredRequirement(requirementId);
         validateRequest(requirement, request);
         SystemUser assignee = userService.getRequiredUser(request.getAssigneeId());
@@ -62,6 +63,7 @@ public class RequirementTaskService {
 
     @Transactional
     public RequirementTaskResponse update(Long requirementId, Long taskId, RequirementTaskRequest request) {
+        userService.requirePermission("REQUIREMENT_TASK_MANAGE");
         Requirement requirement = requirementService.getRequiredRequirement(requirementId);
         RequirementTask task = getRequiredTask(requirementId, taskId);
         validateRequest(requirement, request);
@@ -73,6 +75,7 @@ public class RequirementTaskService {
 
     @Transactional
     public void delete(Long requirementId, Long taskId) {
+        userService.requirePermission("REQUIREMENT_TASK_MANAGE");
         requirementService.getRequiredRequirement(requirementId);
         getRequiredTask(requirementId, taskId);
         requirementTaskMapper.deleteById(taskId);

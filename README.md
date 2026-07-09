@@ -11,8 +11,23 @@
 
 ## 开发约束
 
+- 根目录 `README.md` 是本项目规范的唯一入口；新增或调整项目规范时，必须优先更新本文件，其他目录下的 README 只允许做目录说明或跳转索引，不再承载独立规范。
 - 需求实现必须严格按照对应模块原型执行；已有 HTML 原型时，页面布局、交互入口、字段展示、弹窗结构和关键视觉效果都应以原型为准，不得只做功能骨架。
 - 如果发现原型与口头需求或现有实现冲突，必须先说明差异并按用户确认后的方向实现。
+- 文档必须按以下规则放置：
+  - `docs/project/`：只放全项目通用文档，例如整体架构、AI 开发规则、工程规范、部署约定。
+  - `docs/modules/`：按业务模块分类存放模块文档，例如 `case-management`、`bug-management`、`organization-management`。
+  - `docs/modules/{module}/requirements/{phase-or-requirement}/`：放该模块某次需求或迭代文档，例如 `prd.html`、`task-breakdown.html`、`acceptance.html`。
+  - `docs/modules/{module}/design/`：放该模块相对稳定的设计文档，例如 `api-spec.html`、数据模型、页面说明。
+- 所有需求设计、接口设计、页面原型、验收说明等设计产物必须优先使用 HTML 文件输出；除非用户明确要求 Markdown，否则不要新增 `.md` 作为正式设计产物。
+- 新增模块需求设计产物时，优先使用：
+
+```text
+docs/modules/{module}/requirements/phase-1/prd.html
+docs/modules/{module}/design/api-spec.html
+```
+
+- 不允许把模块级需求、原型、接口设计文档放到 `docs/project/`。
 
 ## 后端目录结构
 

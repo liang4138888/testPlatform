@@ -5,6 +5,7 @@ export interface CurrentUser {
   username: string;
   displayName: string;
   avatar?: string;
+  organizationId?: number;
   roles: string[];
   permissions: string[];
 }
@@ -14,15 +15,46 @@ export interface LoginResponse {
   user: CurrentUser;
 }
 
+export interface RegisterOrganizationOption {
+  id: number;
+  orgCode: string;
+  orgName: string;
+}
+
+export interface RegisterOptionsResponse {
+  organizations: RegisterOrganizationOption[];
+}
+
+export interface RegisterPayload {
+  username: string;
+  displayName: string;
+  password: string;
+  confirmPassword: string;
+  organizationId?: number;
+}
+
+function cacheLogin(response: LoginResponse) {
+  setToken(response.token);
+  localStorage.setItem('test-platform-user', JSON.stringify(response.user));
+  return response;
+}
+
 export function login(username: string, password: string) {
   return request<LoginResponse>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ username, password })
-  }).then((response) => {
-    setToken(response.token);
-    localStorage.setItem('test-platform-user', JSON.stringify(response.user));
-    return response;
-  });
+  }).then(cacheLogin);
+}
+
+export function register(payload: RegisterPayload) {
+  return request<LoginResponse>('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }).then(cacheLogin);
+}
+
+export function registerOptions() {
+  return request<RegisterOptionsResponse>('/api/auth/register/options');
 }
 
 export function logout() {

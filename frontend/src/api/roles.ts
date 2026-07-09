@@ -11,6 +11,21 @@ export interface PermissionItem {
   id: number;
   permissionCode: string;
   permissionName: string;
+  pageCode: string;
+  pageName: string;
+  parentId?: number;
+  permissionType: 'MENU' | 'PAGE' | 'ACTION';
+  sortOrder: number;
+}
+
+export interface PermissionPayload {
+  permissionCode: string;
+  permissionName: string;
+  pageCode: string;
+  pageName: string;
+  parentId?: number;
+  permissionType: 'MENU' | 'PAGE' | 'ACTION';
+  sortOrder: number;
 }
 
 export function listRoles() {
@@ -35,14 +50,14 @@ export function listPermissions() {
   return request<PermissionItem[]>('/api/permissions');
 }
 
-export function createPermission(payload: { permissionCode: string; permissionName: string }) {
+export function createPermission(payload: PermissionPayload) {
   return request<PermissionItem>('/api/permissions', {
     method: 'POST',
     body: JSON.stringify(payload)
   });
 }
 
-export function updatePermission(permissionId: number, payload: { permissionCode: string; permissionName: string }) {
+export function updatePermission(permissionId: number, payload: PermissionPayload) {
   return request<PermissionItem>(`/api/permissions/${permissionId}`, {
     method: 'PUT',
     body: JSON.stringify(payload)

@@ -8,6 +8,7 @@ public class CurrentUserResponse {
     private String username;
     private String displayName;
     private String avatar;
+    private Long organizationId;
     private List<String> roles;
     private List<String> permissions;
 
@@ -19,6 +20,8 @@ public class CurrentUserResponse {
     public void setDisplayName(String displayName) { this.displayName = displayName; }
     public String getAvatar() { return avatar; }
     public void setAvatar(String avatar) { this.avatar = avatar; }
+    public Long getOrganizationId() { return organizationId; }
+    public void setOrganizationId(Long organizationId) { this.organizationId = organizationId; }
     public List<String> getRoles() { return roles; }
     public void setRoles(List<String> roles) { this.roles = roles; }
     public List<String> getPermissions() { return permissions; }

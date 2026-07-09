@@ -120,6 +120,7 @@ public class CaseSuiteService {
 
     @Transactional
     public void deleteSuite(Long suiteId) {
+        userService.requirePermission("CASE_DELETE");
         getRequiredSuite(suiteId);
         caseNodeMapper.delete(new LambdaQueryWrapper<CaseNode>().eq(CaseNode::getSuiteId, suiteId));
         caseSuiteMapper.deleteById(suiteId);
@@ -128,10 +129,10 @@ public class CaseSuiteService {
     public List<FileObjectResponse> listSuiteFiles(Long suiteId) {
         CaseSuite suite = getRequiredSuite(suiteId);
         List<FileObjectResponse> files = new ArrayList<FileObjectResponse>();
-        if (suite.getOriginalFileId() != null) {
+        if (suite.getOriginalFileId() != null && userService.hasPermission(FileObjectService.PERMISSION_CASE_EDIT)) {
             files.add(FileObjectResponse.from(fileObjectService.getRequiredFile(suite.getOriginalFileId())));
         }
-        if (suite.getExportedFileId() != null) {
+        if (suite.getExportedFileId() != null && userService.hasPermission(FileObjectService.PERMISSION_CASE_EXPORT)) {
             files.add(FileObjectResponse.from(fileObjectService.getRequiredFile(suite.getExportedFileId())));
         }
         return files;
@@ -139,6 +140,7 @@ public class CaseSuiteService {
 
     @Transactional
     public CaseSuiteResponse upload(Long requirementId, MultipartFile file, String suiteName) {
+        userService.requirePermission("CASE_UPLOAD");
         Requirement requirement = requirementService.getRequiredRequirement(requirementId);
         validateXmindFile(file);
 
@@ -175,6 +177,7 @@ public class CaseSuiteService {
 
     @Transactional
     public CaseSuiteResponse saveNodes(Long suiteId, CaseNodesSaveRequest request) {
+        userService.requirePermission("CASE_EDIT");
         getRequiredSuite(suiteId);
         validateWriteNodes(request.getNodes());
 
@@ -189,6 +192,7 @@ public class CaseSuiteService {
 
     @Transactional
     public CaseSuiteExportResponse exportXmind(Long suiteId) {
+        userService.requirePermission("CASE_EXPORT");
         CaseSuite suite = getRequiredSuite(suiteId);
         List<CaseNode> nodes = loadActiveNodes(suiteId);
         if (nodes.isEmpty()) {

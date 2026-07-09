@@ -10,11 +10,11 @@
         </div>
         <div class="actions-inline">
           <el-button @click="goBack">返回列表</el-button>
-          <el-button type="primary" :loading="saving" @click="saveTree">保存用例树</el-button>
+          <el-button v-if="canEditCase" type="primary" :loading="saving" @click="saveTree">保存用例树</el-button>
         </div>
       </div>
       <div class="mind-toolbar">
-        <el-button size="small" @click="addRootNode">新增根节点</el-button>
+        <el-button v-if="canEditCase" size="small" @click="addRootNode">新增根节点</el-button>
         <el-button size="small" @click="expandAll">全部展开</el-button>
         <el-button size="small" @click="collapseAll">全部收起</el-button>
         <el-button size="small" @click="zoomOut">缩小</el-button>
@@ -40,7 +40,7 @@
             <div class="mind-node-wrap">
               <button class="mind-node module" :data-node-key="module.key" :class="[{ active: selectedKey === module.key }, statusClass(module)]" @click="onNodeClick(module)">
                 <span>{{ module.name }}</span>
-                <select class="case-status-select" :class="statusClass(module)" :value="module.executionStatus" @click.stop @change="changeNodeStatus(module, $event)">
+                <select class="case-status-select" :disabled="!canEditCase" :class="statusClass(module)" :value="module.executionStatus" @click.stop @change="changeNodeStatus(module, $event)">
                   <option value="PENDING">待开始</option>
                   <option value="PASSED">通过</option>
                   <option value="FAILED">失败</option>
@@ -54,14 +54,14 @@
               >
                 {{ isCollapsed(module.key) ? '展开' : '收起' }}
               </button>
-              <button v-else class="mind-add" title="添加子节点" @click="addChildTo(module)">+</button>
+              <button v-else-if="canEditCase" class="mind-add" title="添加子节点" @click="addChildTo(module)">+</button>
             </div>
             <div v-if="module.children.length && !isCollapsed(module.key)" class="mind-children">
               <div v-for="caseNode in module.children" :key="caseNode.key" class="mind-branch">
                 <div class="mind-node-wrap">
                   <button class="mind-node case" :data-node-key="caseNode.key" :class="[{ active: selectedKey === caseNode.key }, statusClass(caseNode)]" @click="onNodeClick(caseNode)">
                     <span>{{ caseNode.name }}</span>
-                    <select class="case-status-select" :class="statusClass(caseNode)" :value="caseNode.executionStatus" @click.stop @change="changeNodeStatus(caseNode, $event)">
+                    <select class="case-status-select" :disabled="!canEditCase" :class="statusClass(caseNode)" :value="caseNode.executionStatus" @click.stop @change="changeNodeStatus(caseNode, $event)">
                       <option value="PENDING">待开始</option>
                       <option value="PASSED">通过</option>
                       <option value="FAILED">失败</option>
@@ -75,14 +75,14 @@
                   >
                     {{ isCollapsed(caseNode.key) ? '展开' : '收起' }}
                   </button>
-                  <button v-else class="mind-add" title="添加子节点" @click="addChildTo(caseNode)">+</button>
+                  <button v-else-if="canEditCase" class="mind-add" title="添加子节点" @click="addChildTo(caseNode)">+</button>
                 </div>
                 <div v-if="caseNode.children.length && !isCollapsed(caseNode.key)" class="mind-children">
                   <div v-for="step in caseNode.children" :key="step.key" class="mind-branch">
                     <div class="mind-node-wrap">
                       <button class="mind-node step" :data-node-key="step.key" :class="[{ active: selectedKey === step.key }, statusClass(step)]" @click="onNodeClick(step)">
                         <span>{{ step.name }}</span>
-                        <select class="case-status-select" :class="statusClass(step)" :value="step.executionStatus" @click.stop @change="changeNodeStatus(step, $event)">
+                        <select class="case-status-select" :disabled="!canEditCase" :class="statusClass(step)" :value="step.executionStatus" @click.stop @change="changeNodeStatus(step, $event)">
                           <option value="PENDING">待开始</option>
                           <option value="PASSED">通过</option>
                           <option value="FAILED">失败</option>
@@ -96,14 +96,14 @@
                       >
                         {{ isCollapsed(step.key) ? '展开' : '收起' }}
                       </button>
-                      <button v-else class="mind-add" title="添加子节点" @click="addChildTo(step)">+</button>
+                      <button v-else-if="canEditCase" class="mind-add" title="添加子节点" @click="addChildTo(step)">+</button>
                     </div>
                     <div v-if="step.children.length && !isCollapsed(step.key)" class="mind-children">
                       <div v-for="expected in step.children" :key="expected.key" class="mind-branch">
                         <div class="mind-node-wrap">
                           <button class="mind-node expected" :data-node-key="expected.key" :class="[{ active: selectedKey === expected.key }, statusClass(expected)]" @click="onNodeClick(expected)">
                             <span>{{ expected.name }}</span>
-                            <select class="case-status-select" :class="statusClass(expected)" :value="expected.executionStatus" @click.stop @change="changeNodeStatus(expected, $event)">
+                            <select class="case-status-select" :disabled="!canEditCase" :class="statusClass(expected)" :value="expected.executionStatus" @click.stop @change="changeNodeStatus(expected, $event)">
                               <option value="PENDING">待开始</option>
                               <option value="PASSED">通过</option>
                               <option value="FAILED">失败</option>
@@ -112,7 +112,7 @@
                           <button v-if="expected.children.length" class="mind-toggle" :title="isCollapsed(expected.key) ? '展开' : '收起'" @click="toggleNode(expected.key)">
                             {{ isCollapsed(expected.key) ? '展开' : '收起' }}
                           </button>
-                          <button v-else class="mind-add" title="添加子节点" @click="addChildTo(expected)">+</button>
+                          <button v-else-if="canEditCase" class="mind-add" title="添加子节点" @click="addChildTo(expected)">+</button>
                         </div>
                       </div>
                     </div>
@@ -131,10 +131,10 @@
       <template v-if="selectedNode">
         <el-form label-width="88px">
           <el-form-item label="节点名称" required>
-            <el-input v-model="selectedNode.name" maxlength="255" @input="syncSelectedLabel" />
+            <el-input v-model="selectedNode.name" :disabled="!canEditCase" maxlength="255" @input="syncSelectedLabel" />
           </el-form-item>
           <el-form-item label="节点类型" required>
-            <el-select v-model="selectedNode.nodeType">
+            <el-select v-model="selectedNode.nodeType" :disabled="!canEditCase">
               <el-option label="模块" value="module" />
               <el-option label="用例" value="case" />
               <el-option label="步骤" value="step" />
@@ -142,22 +142,22 @@
             </el-select>
           </el-form-item>
           <el-form-item label="执行状态">
-            <el-radio-group v-model="selectedNode.executionStatus">
+            <el-radio-group v-model="selectedNode.executionStatus" :disabled="!canEditCase">
               <el-radio-button label="PENDING">待开始</el-radio-button>
               <el-radio-button label="PASSED">通过</el-radio-button>
               <el-radio-button label="FAILED">失败</el-radio-button>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="说明">
-            <el-input v-model="selectedNode.description" type="textarea" maxlength="1000" show-word-limit />
+            <el-input v-model="selectedNode.description" :disabled="!canEditCase" type="textarea" maxlength="1000" show-word-limit />
           </el-form-item>
         </el-form>
       </template>
       <template #footer>
         <div class="dialog-actions">
-          <el-button @click="addChildNode">新增子节点</el-button>
-          <el-button @click="addRootNode">新增根节点</el-button>
-          <el-button type="danger" @click="removeSelectedNode">删除节点</el-button>
+          <el-button v-if="canEditCase" @click="addChildNode">新增子节点</el-button>
+          <el-button v-if="canEditCase" @click="addRootNode">新增根节点</el-button>
+          <el-button v-if="canEditCase" type="danger" @click="removeSelectedNode">删除节点</el-button>
           <el-button type="primary" :loading="saving" @click="completeNodeEdit">完成</el-button>
         </div>
       </template>
@@ -169,7 +169,9 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { getCaseSuite, saveCaseNodes, exportCaseSuite, type CaseSuiteDetail } from '../api/caseSuites';
+import { getCaseSuite, saveCaseNodes, type CaseSuiteDetail } from '../api/caseSuites';
+import { showErrorMessage } from '../api/http';
+import { hasPermission } from '../utils/permissions';
 import {
   findNode,
   findParent,
@@ -200,6 +202,7 @@ const mindCanvasRef = ref<HTMLElement>();
 const mindRootRef = ref<HTMLElement>();
 const mindPaths = ref<string[]>([]);
 const svgSize = ref({ width: 0, height: 0 });
+const canEditCase = computed(() => hasPermission('CASE_EDIT'));
 
 const zoomPercent = computed(() => Math.round(zoom.value * 100));
 const mindCanvasStyle = computed(() => ({
@@ -218,6 +221,10 @@ function onNodeClick(data: EditableNode) {
 }
 
 async function changeNodeStatus(node: EditableNode, event: Event) {
+  if (!canEditCase.value) {
+    ElMessage.warning('无编辑用例权限');
+    return;
+  }
   node.executionStatus = (event.target as HTMLSelectElement).value as EditableNode['executionStatus'];
   await saveTree(false);
 }
@@ -289,6 +296,10 @@ function syncSelectedLabel() {
 }
 
 async function addChildTo(parent: EditableNode) {
+  if (!canEditCase.value) {
+    ElMessage.warning('无编辑用例权限');
+    return;
+  }
   const child: EditableNode = {
     key: nextNodeKey(),
     label: '新节点',
@@ -308,6 +319,10 @@ async function addChildTo(parent: EditableNode) {
 }
 
 async function addChildNode() {
+  if (!canEditCase.value) {
+    ElMessage.warning('无编辑用例权限');
+    return;
+  }
   const parent = selectedNode.value;
   if (!parent) {
     ElMessage.warning('请先选择父节点');
@@ -317,6 +332,10 @@ async function addChildNode() {
 }
 
 async function addRootNode() {
+  if (!canEditCase.value) {
+    ElMessage.warning('无编辑用例权限');
+    return;
+  }
   const node: EditableNode = {
     key: nextNodeKey(),
     label: '新模块',
@@ -335,6 +354,10 @@ async function addRootNode() {
 }
 
 async function removeSelectedNode() {
+  if (!canEditCase.value) {
+    ElMessage.warning('无编辑用例权限');
+    return;
+  }
   const key = selectedKey.value;
   if (!key) {
     return;
@@ -429,7 +452,9 @@ function statusClass(node: EditableNode) {
 
 async function completeNodeEdit() {
   nodeDialogVisible.value = false;
-  await saveTree(false);
+  if (canEditCase.value) {
+    await saveTree(false);
+  }
 }
 
 async function loadSuite() {
@@ -445,13 +470,17 @@ async function loadSuite() {
     selectedKey.value = treeData.value[0]?.key;
     scheduleRenderLines();
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '用例集加载失败');
+    showErrorMessage(error, '用例集加载失败');
   } finally {
     loading.value = false;
   }
 }
 
 async function saveTree(showMessage = true) {
+  if (!canEditCase.value) {
+    ElMessage.warning('无编辑用例权限');
+    return;
+  }
   if (!suiteId.value || saving.value) {
     return;
   }
@@ -465,7 +494,6 @@ async function saveTree(showMessage = true) {
   saving.value = true;
   try {
     suite.value = await saveCaseNodes(suiteId.value, toPayload(treeData.value));
-    await exportCaseSuite(suiteId.value);
     if (showMessage) {
       suite.value = await getCaseSuite(suiteId.value);
       resetNodeSeq();
@@ -473,10 +501,10 @@ async function saveTree(showMessage = true) {
     }
     scheduleRenderLines();
     if (showMessage) {
-      ElMessage.success('用例树已保存并生成 XMind 文件');
+      ElMessage.success('用例树已保存');
     }
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '保存失败');
+    showErrorMessage(error, '保存失败');
   } finally {
     saving.value = false;
   }

@@ -33,7 +33,7 @@
             </div>
             <div class="actions">
               <el-button @click="loadBugs">刷新</el-button>
-              <el-button type="primary" @click="openCreate">新建 Bug</el-button>
+              <el-button v-if="canCreateBug" type="primary" @click="openCreate">新建 Bug</el-button>
             </div>
           </div>
         </template>
@@ -148,7 +148,7 @@
             <el-input v-model="createForm.description" type="textarea" :rows="4" />
           </el-form-item>
           <el-form-item label="问题截图" class="full">
-            <el-upload class="create-image-upload" drag multiple :auto-upload="false" :on-change="addCreateImage" :on-remove="removeCreateImage" accept="image/png,image/jpeg,image/gif,image/webp">
+            <el-upload v-if="canUploadBugImage" class="create-image-upload" drag multiple :auto-upload="false" :on-change="addCreateImage" :on-remove="removeCreateImage" accept="image/png,image/jpeg,image/gif,image/webp">
               <div class="upload-zone-content">
                 <strong>点击或拖拽图片到这里上传</strong>
                 <p>支持 png、jpg、jpeg、gif、webp，单张 10MB。</p>
@@ -183,22 +183,22 @@
                     <p class="hint">待修复和修复完成由测试提交，已修复可由开发或产品提交；列表可直接修改状态。</p>
                   </el-form-item>
                   <el-form-item label="指派人">
-                    <el-select v-model="detail.assigneeId" clearable filterable>
+                    <el-select v-model="detail.assigneeId" :disabled="!canAssignBug" clearable filterable>
                       <el-option v-for="user in users" :key="user.id" :label="user.displayName" :value="user.id" />
                     </el-select>
                   </el-form-item>
                   <el-form-item label="严重级别">
-                    <el-select v-model="detail.severity"><el-option v-for="item in severities" :key="item" :label="item" :value="item" /></el-select>
+                    <el-select v-model="detail.severity" :disabled="!canEditBug"><el-option v-for="item in severities" :key="item" :label="item" :value="item" /></el-select>
                   </el-form-item>
                   <el-form-item label="优先级">
-                    <el-select v-model="detail.priority"><el-option v-for="item in priorities" :key="item" :label="item" :value="item" /></el-select>
+                    <el-select v-model="detail.priority" :disabled="!canEditBug"><el-option v-for="item in priorities" :key="item" :label="item" :value="item" /></el-select>
                   </el-form-item>
-                  <el-form-item label="标题" class="full"><el-input v-model="detail.title" /></el-form-item>
-                  <el-form-item label="描述" class="full"><el-input v-model="detail.description" type="textarea" :rows="4" /></el-form-item>
+                  <el-form-item label="标题" class="full"><el-input v-model="detail.title" :disabled="!canEditBug" /></el-form-item>
+                  <el-form-item label="描述" class="full"><el-input v-model="detail.description" :disabled="!canEditBug" type="textarea" :rows="4" /></el-form-item>
                 </div>
               </el-form>
               <div class="actions detail-actions">
-                <el-button type="primary" @click="saveDetail">保存修改</el-button>
+                <el-button v-if="canEditBug || canAssignBug" type="primary" @click="saveDetail">保存修改</el-button>
                 <el-button v-if="canSubmitFixed" type="primary" plain @click="setDetailStatus('已修复')">提交已修复</el-button>
                 <el-button v-if="canSubmitTestStatus" @click="setDetailStatus('修复完成')">测试确认修复完成</el-button>
                 <el-button v-if="canSubmitTestStatus" type="danger" plain @click="setDetailStatus('待修复')">重新打开为待修复</el-button>
@@ -211,9 +211,9 @@
               </div>
               <div class="image-grid">
                 <div v-for="item in detail.attachments" :key="item.id" class="image-card">
-                  <img :src="filePreviewUrl(item.fileId)" alt="Bug 图片" />
+                  <img :src="attachmentPreviewUrls[item.fileId] || ''" alt="Bug 图片" />
                   <div class="image-name">图片附件 #{{ item.id }}</div>
-                  <div class="image-meta"><span>{{ item.createdAt }}</span><a :href="filePreviewUrl(item.fileId)" target="_blank">预览</a></div>
+                  <div class="image-meta"><span>{{ item.createdAt }}</span><button type="button" @click="previewAttachment(item.fileId)">预览</button></div>
                 </div>
               </div>
               <el-empty v-if="!detail.attachments.length" description="暂无图片附件" :image-size="80" />
@@ -225,8 +225,10 @@
                 <p>{{ comment.content }}</p>
               </div>
               <el-empty v-if="!detail.comments.length" description="暂无评论" :image-size="80" />
-              <el-input v-model="commentContent" type="textarea" :rows="3" placeholder="输入评论，评论后会通知报告人和指派人" />
-              <el-button type="primary" class="comment-button" @click="submitComment">发表评论</el-button>
+              <template v-if="canCommentBug">
+                <el-input v-model="commentContent" type="textarea" :rows="3" placeholder="输入评论，评论后会通知报告人和指派人" />
+                <el-button type="primary" class="comment-button" @click="submitComment">发表评论</el-button>
+              </template>
             </el-tab-pane>
           </el-tabs>
         </div>
@@ -247,14 +249,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { ElMessage, type UploadFile, type UploadFiles } from 'element-plus';
-import { cachedUser } from '../api/auth';
 import { addBugComment, createBug, getBug, listBugs, updateBug, uploadBugImage, type BugDetail, type BugListItem } from '../api/bugs';
-import { filePreviewUrl } from '../api/files';
+import { openFilePreview, previewFileObjectUrl } from '../api/files';
+import { showErrorMessage } from '../api/http';
 import { listProjects, type Project } from '../api/projects';
 import { listRequirements, type Requirement } from '../api/requirements';
 import { listAssignableUsers, type AssignableUser } from '../api/users';
+import { hasPermission } from '../utils/permissions';
 
 const statuses = ['待修复', '已修复', '修复完成'];
 const severities = ['严重', '高', '中', '低'];
@@ -270,14 +273,19 @@ const detailVisible = ref(false);
 const createVisible = ref(false);
 const commentContent = ref('');
 const activeTab = ref('base');
+const attachmentPreviewUrls = ref<Record<number, string>>({});
 const createProjectId = ref<number>();
 const createImages = ref<File[]>([]);
 const filters = reactive({ projectId: '', requirementId: '', status: '', assigneeId: '', keyword: '' });
 const createForm = reactive({ requirementId: undefined as number | undefined, title: '', description: '', severity: '中', priority: '中', assigneeId: undefined as number | undefined });
 
-const currentPermissions = computed(() => cachedUser()?.permissions ?? []);
-const canSubmitFixed = computed(() => currentPermissions.value.includes('BUG_STATUS_FIXED'));
-const canSubmitTestStatus = computed(() => currentPermissions.value.includes('BUG_STATUS_TEST'));
+const canCreateBug = computed(() => hasPermission('BUG_CREATE'));
+const canEditBug = computed(() => hasPermission('BUG_EDIT'));
+const canAssignBug = computed(() => hasPermission('BUG_ASSIGN'));
+const canCommentBug = computed(() => hasPermission('BUG_COMMENT'));
+const canUploadBugImage = computed(() => hasPermission('BUG_UPLOAD_IMAGE'));
+const canSubmitFixed = computed(() => hasPermission('BUG_STATUS_FIXED'));
+const canSubmitTestStatus = computed(() => hasPermission('BUG_STATUS_TEST'));
 const canChangeStatus = computed(() => canSubmitFixed.value || canSubmitTestStatus.value);
 
 const filterRequirements = computed(() => {
@@ -315,6 +323,10 @@ async function loadBaseData() {
 }
 
 function openCreate() {
+  if (!canCreateBug.value) {
+    ElMessage.warning('无新建 Bug 权限');
+    return;
+  }
   resetCreateForm();
   createVisible.value = true;
 }
@@ -331,9 +343,32 @@ function resetCreateForm() {
 }
 
 async function openDetail(id: number) {
+  clearAttachmentPreviewUrls();
   detail.value = await getBug(id);
+  await loadAttachmentPreviewUrls();
   activeTab.value = 'base';
   detailVisible.value = true;
+}
+
+async function loadAttachmentPreviewUrls() {
+  const urls: Record<number, string> = {};
+  for (const attachment of detail.value?.attachments ?? []) {
+    urls[attachment.fileId] = await previewFileObjectUrl(attachment.fileId);
+  }
+  attachmentPreviewUrls.value = urls;
+}
+
+function clearAttachmentPreviewUrls() {
+  Object.values(attachmentPreviewUrls.value).forEach((url) => URL.revokeObjectURL(url));
+  attachmentPreviewUrls.value = {};
+}
+
+async function previewAttachment(fileId: number) {
+  try {
+    await openFilePreview(fileId);
+  } catch (error) {
+    showErrorMessage(error, '预览失败');
+  }
 }
 
 function onFilterProjectChange() {
@@ -350,6 +385,10 @@ function currentCreateImages(uploadFiles: UploadFiles) {
 }
 
 function addCreateImage(_uploadFile: UploadFile, uploadFiles: UploadFiles) {
+  if (!canUploadBugImage.value) {
+    ElMessage.warning('无上传 Bug 图片权限');
+    return;
+  }
   createImages.value = currentCreateImages(uploadFiles);
 }
 
@@ -358,6 +397,10 @@ function removeCreateImage(_uploadFile: UploadFile, uploadFiles: UploadFiles) {
 }
 
 async function submitCreate() {
+  if (!canCreateBug.value) {
+    ElMessage.warning('无新建 Bug 权限');
+    return;
+  }
   const requirementId = createForm.requirementId;
   if (!requirementId || requirementId <= 0) {
     ElMessage.warning('请选择需求');
@@ -372,7 +415,7 @@ async function submitCreate() {
     return;
   }
   const created = await createBug(requirementId, createForm);
-  for (const file of createImages.value) {
+  for (const file of canUploadBugImage.value ? createImages.value : []) {
     await uploadBugImage(created.id, file);
   }
   createVisible.value = false;
@@ -429,6 +472,10 @@ function priorityType(priority: string) {
 
 async function saveDetail() {
   if (!detail.value) return;
+  if (!canEditBug.value && !canAssignBug.value) {
+    ElMessage.warning('无编辑 Bug 权限');
+    return;
+  }
   try {
     detail.value = await updateBug(detail.value.id, {
       title: detail.value.title,
@@ -441,33 +488,46 @@ async function saveDetail() {
     ElMessage.success('保存成功');
     await loadBugs();
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '保存失败');
+    showErrorMessage(error, '保存失败');
   }
 }
 
 async function setDetailStatus(status: string) {
   if (!detail.value) return;
+  if ((status === '已修复' && !canSubmitFixed.value) || (status !== '已修复' && !canSubmitTestStatus.value)) {
+    ElMessage.warning('无状态流转权限');
+    return;
+  }
   try {
     detail.value = await updateBug(detail.value.id, { status });
     ElMessage.success('状态已更新');
     await loadBugs();
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '状态更新失败');
+    showErrorMessage(error, '状态更新失败');
   }
 }
 
 async function changeStatus(row: BugListItem, status: string) {
+  if ((status === '已修复' && !canSubmitFixed.value) || (status !== '已修复' && !canSubmitTestStatus.value)) {
+    ElMessage.warning('无状态流转权限');
+    await loadBugs();
+    return;
+  }
   try {
     await updateBug(row.id, { status });
     ElMessage.success('状态已更新');
     await loadBugs();
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '状态更新失败');
+    showErrorMessage(error, '状态更新失败');
     await loadBugs();
   }
 }
 
 async function submitComment() {
+  if (!canCommentBug.value) {
+    ElMessage.warning('无评论 Bug 权限');
+    return;
+  }
   if (!detail.value || !commentContent.value.trim()) return;
   await addBugComment(detail.value.id, commentContent.value.trim());
   commentContent.value = '';
@@ -479,6 +539,8 @@ onMounted(async () => {
   await loadBaseData();
   await loadBugs();
 });
+
+onBeforeUnmount(clearAttachmentPreviewUrls);
 </script>
 
 <style scoped>

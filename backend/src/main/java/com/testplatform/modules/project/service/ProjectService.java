@@ -39,6 +39,7 @@ public class ProjectService {
 
     @Transactional
     public ProjectResponse createProject(ProjectCreateRequest request) {
+        userService.requirePermission("PROJECT_CREATE");
         Long exists = projectMapper.selectCount(new LambdaQueryWrapper<Project>().eq(Project::getName, request.getName()));
         if (exists > 0) {
             throw new BusinessException("PROJECT_NAME_EXISTS", "项目名称已存在");

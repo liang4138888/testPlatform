@@ -1,4 +1,4 @@
-import { request, type ApiResponse } from './http';
+import { request } from './http';
 
 export type NodeType = 'module' | 'case' | 'step' | 'expected';
 export type ExecutionStatus = 'PENDING' | 'PASSED' | 'FAILED';
@@ -65,14 +65,6 @@ export interface CaseSuiteExportResult {
   fileName: string;
 }
 
-async function parseResponse<T>(response: Response): Promise<T> {
-  const body = (await response.json()) as ApiResponse<T>;
-  if (!response.ok || body.code !== '0') {
-    throw new Error(body.message || '请求失败');
-  }
-  return body.data;
-}
-
 export function searchCaseSuites(params: CaseSuiteSearchParams = {}) {
   const query = new URLSearchParams();
   if (params.projectId) {
@@ -105,11 +97,10 @@ export async function uploadCaseSuite(requirementId: number, file: File, name?: 
   if (name?.trim()) {
     formData.append('name', name.trim());
   }
-  const response = await fetch(`/api/requirements/${requirementId}/case-suites/upload`, {
+  return request<CaseSuiteDetail>(`/api/requirements/${requirementId}/case-suites/upload`, {
     method: 'POST',
     body: formData
   });
-  return parseResponse<CaseSuiteDetail>(response);
 }
 
 export function saveCaseNodes(suiteId: number, nodes: CaseNodePayload[]) {

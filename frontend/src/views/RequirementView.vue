@@ -13,7 +13,7 @@
           <label class="search">
             <input v-model="filters.keyword" type="search" placeholder="搜索需求" @input="selectFirstVisible" />
           </label>
-          <button class="primary-btn" type="button" :disabled="!filters.projectId" @click="openCreateDialog">+ 新建需求</button>
+          <button v-if="canCreateRequirement" class="primary-btn" type="button" :disabled="!filters.projectId" @click="openCreateDialog">+ 新建需求</button>
         </div>
       </header>
 
@@ -42,7 +42,7 @@
           class="requirement-card"
           :class="{ active: selectedRequirement?.id === requirement.id, dragging: draggingRequirement?.id === requirement.id }"
           type="button"
-          draggable="true"
+          :draggable="canTransitionRequirement"
           @dragstart="startRequirementDrag(requirement, $event)"
           @dragend="endRequirementDrag"
           @click="selectRequirement(requirement)"
@@ -104,11 +104,11 @@
         <div class="panel-head"><h2>人员分配</h2></div>
         <div class="assignment-form">
           <label>开发人员</label>
-          <el-select v-model="assignmentForm.devAssigneeIds" multiple filterable collapse-tags collapse-tags-tooltip placeholder="选择开发人员">
+          <el-select v-model="assignmentForm.devAssigneeIds" :disabled="!canAssignRequirement" multiple filterable collapse-tags collapse-tags-tooltip placeholder="选择开发人员">
             <el-option v-for="user in users" :key="`dev-${user.id}`" :label="user.displayName || user.username" :value="user.id" />
           </el-select>
           <label>测试人员</label>
-          <el-select v-model="assignmentForm.testAssigneeIds" multiple filterable collapse-tags collapse-tags-tooltip placeholder="选择测试人员">
+          <el-select v-model="assignmentForm.testAssigneeIds" :disabled="!canAssignRequirement" multiple filterable collapse-tags collapse-tags-tooltip placeholder="选择测试人员">
             <el-option v-for="user in users" :key="`test-${user.id}`" :label="user.displayName || user.username" :value="user.id" />
           </el-select>
           <div class="assignment-tip">人员分配会在流转到下一状态时保存</div>
@@ -129,7 +129,7 @@
               <span class="task-role">{{ formatDateTime(task.startTime) }} ~ {{ formatDateTime(task.endTime) }}</span>
             </span>
             <span class="task-side">
-              <select class="task-status-select" :class="taskStatusClass(task.status)" :value="task.status" @click.stop @change="(event) => changeTaskStatus(task, event)">
+              <select class="task-status-select" :disabled="!canManageRequirementTask" :class="taskStatusClass(task.status)" :value="task.status" @click.stop @change="(event) => changeTaskStatus(task, event)">
                 <option v-for="item in taskStatusOptions(task)" :key="item.value" :value="item.value">{{ item.label }}</option>
               </select>
             </span>
@@ -137,7 +137,7 @@
         </div>
         <div v-else class="empty">{{ canManageStageTasks ? '暂无子任务，请先创建' : '当前状态无任务门禁' }}</div>
         <div class="case-actions">
-          <button class="ghost-btn" type="button" @click="openUploadDialog(selectedRequirement)">上传 XMind</button>
+          <button v-if="canUploadCase" class="ghost-btn" type="button" @click="openUploadDialog(selectedRequirement)">上传 XMind</button>
           <button class="ghost-btn" type="button" @click="openSuitePicker(selectedRequirement)">查看用例</button>
         </div>
       </section>
@@ -149,8 +149,9 @@
             {{ selectedRequirement.status === 'DONE' ? '流程已完成' : gateText(selectedRequirement) }}
           </div>
           <div class="transition-row">
-            <button class="ghost-btn" type="button" :disabled="!previousStatus || transitionLoading" @click="submitTransition(previousStatus)">← {{ previousStatusLabel }}</button>
-            <button class="primary-btn" type="button" :disabled="!nextStatus || !gatePass(selectedRequirement) || transitionLoading" @click="submitTransition(nextStatus)">{{ nextStatusLabel }} →</button>
+            <button v-if="canTransitionRequirement" class="ghost-btn" type="button" :disabled="!previousStatus || transitionLoading" @click="submitTransition(previousStatus)">← {{ previousStatusLabel }}</button>
+            <button v-if="canTransitionRequirement" class="primary-btn" type="button" :disabled="!nextStatus || !gatePass(selectedRequirement) || transitionLoading" @click="submitTransition(nextStatus)">{{ nextStatusLabel }} →</button>
+            <span v-if="!canTransitionRequirement" class="badge">无流转权限</span>
           </div>
         </div>
       </section>
@@ -245,8 +246,8 @@
       <el-table-column prop="updatedAt" label="更新时间" width="190" />
       <el-table-column label="操作" width="200">
         <template #default="{ row }">
-          <el-button link type="primary" @click="goToEditor(row.id)">编辑用例</el-button>
-          <el-button link type="primary" @click="downloadSuiteFiles(row.id)">文件导出</el-button>
+          <el-button v-if="canEditCase" link type="primary" @click="goToEditor(row.id)">编辑用例</el-button>
+          <el-button v-if="canExportCase" link type="primary" @click="downloadSuiteFiles(row.id)">文件导出</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -260,13 +261,14 @@ import { ElMessage } from 'element-plus';
 import { listProjects, type Project } from '../api/projects';
 import { listAssignableUsers, type AssignableUser } from '../api/users';
 import { listCaseSuites, uploadCaseSuite, exportCaseSuite, type CaseSuiteSummary } from '../api/caseSuites';
-import { fileDownloadUrl } from '../api/files';
+import { downloadFile } from '../api/files';
+import { showErrorMessage } from '../api/http';
+import { hasPermission } from '../utils/permissions';
 import {
   createRequirement,
   createRequirementTask,
   deleteRequirementTask,
   DEV_TASK_STATUS_OPTIONS,
-  listRequirementBoard,
   listRequirements,
   listRequirementTasks,
   REQUIREMENT_INVOLVED_MODULE_OPTIONS,
@@ -388,8 +390,16 @@ const nextStatus = computed(() => currentStatusIndex.value >= 0 && currentStatus
 const previousStatusLabel = computed(() => previousStatus.value ? statusLabel(previousStatus.value) : '上一状态');
 const nextStatusLabel = computed(() => nextStatus.value ? statusLabel(nextStatus.value) : '完成');
 
+const canCreateRequirement = computed(() => hasPermission('REQUIREMENT_CREATE'));
+const canAssignRequirement = computed(() => hasPermission('REQUIREMENT_ASSIGN'));
+const canTransitionRequirement = computed(() => hasPermission('REQUIREMENT_TRANSITION'));
+const canManageRequirementTask = computed(() => hasPermission('REQUIREMENT_TASK_MANAGE'));
+const canUploadCase = computed(() => hasPermission('CASE_UPLOAD'));
+const canEditCase = computed(() => hasPermission('CASE_EDIT'));
+const canExportCase = computed(() => hasPermission('CASE_EXPORT'));
+
 const selectedTasks = computed(() => selectedRequirement.value?.tasks ?? []);
-const canManageStageTasks = computed(() => ['DEVELOPING', 'TESTING'].includes(normalizedStatus(selectedRequirement.value)));
+const canManageStageTasks = computed(() => canManageRequirementTask.value && ['DEVELOPING', 'TESTING'].includes(normalizedStatus(selectedRequirement.value)));
 const stageTaskType = computed<RequirementTaskType>(() => normalizedStatus(selectedRequirement.value) === 'TESTING' ? 'TEST' : 'DEV');
 const stageTaskStatusOptions = computed(() => stageTaskType.value === 'TEST' ? TEST_TASK_STATUS_OPTIONS : DEV_TASK_STATUS_OPTIONS);
 const stageAssigneeOptions = computed(() => {
@@ -422,7 +432,7 @@ async function loadProjects() {
     filters.projectId = projects.value[0]?.id;
     await Promise.allSettled([loadUsers(), loadBoard()]);
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '项目加载失败');
+    showErrorMessage(error, '项目加载失败');
   }
 }
 
@@ -441,9 +451,10 @@ async function loadBoard() {
   }
   boardLoading.value = true;
   try {
-    requirements.value = await listRequirementBoard({ projectId: filters.projectId });
-  } catch {
     requirements.value = await listRequirements(filters.projectId);
+  } catch (error) {
+    showErrorMessage(error, '需求加载失败');
+    requirements.value = [];
   } finally {
     boardLoading.value = false;
   }
@@ -470,6 +481,10 @@ function changeStatus(status: RequirementStatus | '全部') {
 }
 
 function openCreateDialog() {
+  if (!canCreateRequirement.value) {
+    ElMessage.warning('无新建需求权限');
+    return;
+  }
   form.name = '';
   form.ownerName = '';
   form.proposedDate = new Date().toISOString().slice(0, 10);
@@ -485,6 +500,10 @@ function openCreateDialog() {
 }
 
 async function submit() {
+  if (!canCreateRequirement.value) {
+    ElMessage.warning('无新建需求权限');
+    return;
+  }
   if (!filters.projectId) return;
   if (!form.name.trim() || !form.ownerName.trim() || !form.proposedDate || !form.proposedIteration.trim() || !form.releaseIteration.trim()) {
     ElMessage.warning('请填写必填信息');
@@ -511,7 +530,7 @@ async function submit() {
     await loadBoard();
     selectedRequirement.value = requirements.value.find((item) => item.id === created.id) ?? created;
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '需求创建失败');
+    showErrorMessage(error, '需求创建失败');
   } finally {
     saving.value = false;
   }
@@ -548,6 +567,10 @@ async function loadSelectedTasks() {
 }
 
 function startRequirementDrag(requirement: Requirement, event: DragEvent) {
+  if (!canTransitionRequirement.value) {
+    event.preventDefault();
+    return;
+  }
   draggingRequirement.value = requirement;
   event.dataTransfer?.setData('text/plain', String(requirement.id));
   event.dataTransfer?.setDragImage(createDragImage(requirement), 16, 16);
@@ -559,14 +582,14 @@ function endRequirementDrag() {
 }
 
 function onStatusDragOver(status: RequirementStatus | '全部') {
-  if (status !== '全部') {
+  if (canTransitionRequirement.value && status !== '全部') {
     dragOverStatus.value = status;
   }
 }
 
 function isDropAllowed(status: RequirementStatus | '全部') {
   const requirement = draggingRequirement.value;
-  if (!requirement || status === '全部') return false;
+  if (!canTransitionRequirement.value || !requirement || status === '全部') return false;
   const currentIndex = REQUIREMENT_STATUS_OPTIONS.findIndex((item) => item.value === normalizedStatus(requirement));
   const targetIndex = REQUIREMENT_STATUS_OPTIONS.findIndex((item) => item.value === status);
   return currentIndex >= 0 && targetIndex >= 0 && Math.abs(targetIndex - currentIndex) === 1;
@@ -584,11 +607,15 @@ function createDragImage(requirement: Requirement) {
 async function dropRequirementToStatus(targetStatus: RequirementStatus | '全部') {
   const requirement = draggingRequirement.value;
   endRequirementDrag();
-  if (!requirement || targetStatus === '全部') return;
+  if (!canTransitionRequirement.value || !requirement || targetStatus === '全部') return;
   await transitionRequirementTo(requirement, targetStatus);
 }
 
 async function transitionRequirementTo(requirement: Requirement, targetStatus: RequirementStatus) {
+  if (!canTransitionRequirement.value) {
+    ElMessage.warning('无状态流转权限');
+    return;
+  }
   const currentStatus = normalizedStatus(requirement);
   const currentIndex = REQUIREMENT_STATUS_OPTIONS.findIndex((item) => item.value === currentStatus);
   const targetIndex = REQUIREMENT_STATUS_OPTIONS.findIndex((item) => item.value === targetStatus);
@@ -612,7 +639,7 @@ async function transitionRequirementTo(requirement: Requirement, targetStatus: R
     await loadSelectedTasks();
     ElMessage.success('状态已更新');
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '状态流转失败');
+    showErrorMessage(error, '状态流转失败');
   } finally {
     transitionLoading.value = false;
   }
@@ -631,6 +658,10 @@ function openTaskDialog(task?: RequirementTask) {
 }
 
 async function saveTask() {
+  if (!canManageRequirementTask.value) {
+    ElMessage.warning('无子任务管理权限');
+    return;
+  }
   if (!selectedRequirement.value) return;
   if (!taskForm.name.trim() || !taskForm.assigneeId || !taskForm.startTime || !taskForm.endTime) {
     ElMessage.warning('请填写子任务必填信息');
@@ -661,13 +692,17 @@ async function saveTask() {
     await loadSelectedTasks();
     ElMessage.success('子任务已保存');
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '子任务保存失败');
+    showErrorMessage(error, '子任务保存失败');
   } finally {
     taskSaving.value = false;
   }
 }
 
 async function deleteTask() {
+  if (!canManageRequirementTask.value) {
+    ElMessage.warning('无子任务管理权限');
+    return;
+  }
   if (!selectedRequirement.value || !taskForm.id) return;
   taskSaving.value = true;
   try {
@@ -676,13 +711,17 @@ async function deleteTask() {
     await loadSelectedTasks();
     ElMessage.success('子任务已删除');
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '子任务删除失败');
+    showErrorMessage(error, '子任务删除失败');
   } finally {
     taskSaving.value = false;
   }
 }
 
 async function changeTaskStatus(task: RequirementTask, event: Event) {
+  if (!canManageRequirementTask.value) {
+    ElMessage.warning('无子任务管理权限');
+    return;
+  }
   if (!selectedRequirement.value) return;
   const target = event.target as HTMLSelectElement;
   const status = target.value as RequirementTaskStatus;
@@ -703,7 +742,7 @@ async function changeTaskStatus(task: RequirementTask, event: Event) {
     ElMessage.success('子任务状态已更新');
   } catch (error) {
     target.value = task.status;
-    ElMessage.error(error instanceof Error ? error.message : '子任务状态更新失败');
+    showErrorMessage(error, '子任务状态更新失败');
   }
 }
 
@@ -719,6 +758,10 @@ function taskStatusClass(status: RequirementTaskStatus) {
 }
 
 function openUploadDialog(requirement: Requirement) {
+  if (!canUploadCase.value) {
+    ElMessage.warning('无上传 XMind 权限');
+    return;
+  }
   uploadRequirement.value = requirement;
   uploadForm.name = '';
   uploadFile.value = undefined;
@@ -730,6 +773,10 @@ function onFileChange(event: Event) {
 }
 
 async function submitUpload() {
+  if (!canUploadCase.value) {
+    ElMessage.warning('无上传 XMind 权限');
+    return;
+  }
   if (!uploadRequirement.value || !uploadFile.value) {
     ElMessage.warning('请选择 .xmind 文件');
     return;
@@ -741,7 +788,7 @@ async function submitUpload() {
     uploadVisible.value = false;
     router.push({ path: '/cases/edit', query: { suiteId: String(suite.id) } });
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '上传失败');
+    showErrorMessage(error, '上传失败');
   } finally {
     uploading.value = false;
   }
@@ -754,24 +801,32 @@ async function openSuitePicker(requirement: Requirement) {
   try {
     caseSuites.value = await listCaseSuites(requirement.id);
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '用例集加载失败');
+    showErrorMessage(error, '用例集加载失败');
   } finally {
     suiteLoading.value = false;
   }
 }
 
 function goToEditor(suiteId: number) {
+  if (!canEditCase.value) {
+    ElMessage.warning('无编辑用例权限');
+    return;
+  }
   suitePickerVisible.value = false;
   router.push({ path: '/cases/edit', query: { suiteId: String(suiteId) } });
 }
 
 async function downloadSuiteFiles(suiteId: number) {
+  if (!canExportCase.value) {
+    ElMessage.warning('无导出用例权限');
+    return;
+  }
   try {
     const result = await exportCaseSuite(suiteId);
     ElMessage.success(`导出成功：${result.fileName}`);
-    window.open(fileDownloadUrl(result.exportedFileId), '_blank');
+    await downloadFile(result.exportedFileId);
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '导出失败');
+    showErrorMessage(error, '导出失败');
   }
 }
 

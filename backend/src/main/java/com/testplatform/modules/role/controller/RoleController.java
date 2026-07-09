@@ -34,6 +34,11 @@ public class RoleController {
         return ApiResponse.ok(roleService.listRoles());
     }
 
+    @GetMapping("/roles/options")
+    public ApiResponse<List<RoleResponse>> roleOptions() {
+        return ApiResponse.ok(roleService.listRoleOptions());
+    }
+
     @PostMapping("/roles")
     public ApiResponse<RoleResponse> createRole(@RequestBody RoleSaveRequest request) {
         return ApiResponse.ok(roleService.createRole(request));
